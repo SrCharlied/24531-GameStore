@@ -6,13 +6,19 @@
     <section class="panel">
         <h2>Compras</h2>
         <p class="lead">
-            Vista preliminar del historial de compras. Por ahora los registros provienen de arrays dummy del controlador.
+            Historial real de compras calculado desde PostgreSQL.
         </p>
+
+        @if (!empty($dbError))
+            <div class="alert" style="margin-top: 16px;">
+                {{ $dbError }}
+            </div>
+        @endif
 
         <table>
             <thead>
                 <tr>
-                    <th>Numero</th>
+                    <th>ID</th>
                     <th>Cliente</th>
                     <th>Empleado</th>
                     <th>Local</th>
@@ -23,12 +29,12 @@
             <tbody>
                 @forelse ($compras as $compra)
                     <tr>
-                        <td>{{ $compra['numero'] }}</td>
-                        <td>{{ $compra['cliente'] }}</td>
-                        <td>{{ $compra['empleado'] }}</td>
-                        <td>{{ $compra['local'] }}</td>
-                        <td>{{ $compra['fecha'] }}</td>
-                        <td>${{ number_format($compra['total'], 2) }}</td>
+                        <td>#{{ $compra->id_compra }}</td>
+                        <td>{{ $compra->nombre_cliente }}</td>
+                        <td>{{ $compra->nombre_empleado }}</td>
+                        <td>{{ $compra->local_nombre }}</td>
+                        <td>{{ \Illuminate\Support\Carbon::parse($compra->fecha_compra)->format('Y-m-d H:i') }}</td>
+                        <td>${{ number_format($compra->total_compra, 2) }}</td>
                     </tr>
                 @empty
                     <tr>

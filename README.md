@@ -34,3 +34,18 @@ php artisan serve
 ```
 
 Despues conectaremos la base de datos PostgreSQL real y sustituiremos los arrays dummy por consultas SQL explicitas.
+
+## Docker simple
+
+El proyecto incluye un setup minimo con dos servicios:
+
+- `app`: Laravel ejecutado con `php artisan serve`
+- `db`: PostgreSQL 15
+
+Para levantarlo:
+
+```bash
+docker compose up --build
+```
+
+La aplicacion queda en `http://localhost:8000`.

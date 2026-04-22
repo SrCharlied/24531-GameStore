@@ -97,6 +97,14 @@
             box-shadow: 0 10px 30px rgba(47, 36, 24, 0.06);
         }
 
+        .alert {
+            background: #fff1e6;
+            border: 1px solid #e2b892;
+            color: #7a3b1f;
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
         .panel h2,
         .panel h3 {
             margin-top: 0;

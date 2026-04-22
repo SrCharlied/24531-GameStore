@@ -2,37 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
+
 class CompraController extends Controller
 {
     public function index()
     {
-        $compras = [
-            [
-                'numero' => 'CMP-1001',
-                'cliente' => 'Carlos Xicara',
-                'empleado' => 'Ana Lux',
-                'local' => 'GameStore Oakland Mall',
-                'fecha' => '2026-03-01 10:15',
-                'total' => 129.99,
-            ],
-            [
-                'numero' => 'CMP-1002',
-                'cliente' => 'Andrea Morales',
-                'empleado' => 'Jorge Sam',
-                'local' => 'GameStore Miraflores',
-                'fecha' => '2026-03-02 11:20',
-                'total' => 109.00,
-            ],
-            [
-                'numero' => 'CMP-1003',
-                'cliente' => 'Lucia Velasquez',
-                'empleado' => 'Tatiana Barrios',
-                'local' => 'GameStore Cayala',
-                'fecha' => '2026-03-06 09:30',
-                'total' => 139.90,
-            ],
-        ];
+        $compras = [];
+        $dbError = null;
 
-        return view('pages.compras', compact('compras'));
+        try {
+            $compras = DB::select(
+                'SELECT
+                    c.ID_Compra,
+                    cl.Nombre_Cliente,
+                    e.Nombre_Empleado,
+                    l.Nombre AS local_nombre,
+                    c.Fecha_Compra,
+                    SUM(cp.Cantidad * cp.Precio_Venta) AS total_compra
+                FROM COMPRA c
+                INNER JOIN CLIENTE cl ON cl.ID_Cliente = c.ID_Cliente
+                INNER JOIN EMPLEADO e ON e.ID_Empleado = c.ID_Empleado
+                INNER JOIN LOCAL l ON l.ID_Local = c.ID_Local
+                INNER JOIN COMPRA_PRODUCTOS cp ON cp.ID_Compra = c.ID_Compra
+                GROUP BY c.ID_Compra, cl.Nombre_Cliente, e.Nombre_Empleado, l.Nombre, c.Fecha_Compra
+                ORDER BY c.Fecha_Compra DESC'
+            );
+        } catch (\Throwable $exception) {
+            $dbError = 'No fue posible cargar el historial de compras.';
+        }
+
+        return view('pages.compras', compact('compras', 'dbError'));
     }
 }

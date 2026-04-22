@@ -6,13 +6,19 @@
     <section class="panel">
         <h2>Productos</h2>
         <p class="lead">
-            Listado temporal de figuras para validar navegacion, estructura de vistas y flujo del modulo.
+            Listado real de productos con JOIN a franquicias, categorias e inventario.
         </p>
+
+        @if (!empty($dbError))
+            <div class="alert" style="margin-top: 16px;">
+                {{ $dbError }}
+            </div>
+        @endif
 
         <table>
             <thead>
                 <tr>
-                    <th>Codigo</th>
+                    <th>ID</th>
                     <th>Producto</th>
                     <th>Franquicia</th>
                     <th>Categoria</th>
@@ -23,12 +29,12 @@
             <tbody>
                 @forelse ($productos as $producto)
                     <tr>
-                        <td>{{ $producto['codigo'] }}</td>
-                        <td>{{ $producto['nombre'] }}</td>
-                        <td>{{ $producto['franquicia'] }}</td>
-                        <td><span class="tag">{{ $producto['categoria'] }}</span></td>
-                        <td>${{ number_format($producto['precio'], 2) }}</td>
-                        <td>{{ $producto['stock'] }}</td>
+                        <td>#{{ $producto->id_producto }}</td>
+                        <td>{{ $producto->nombre }}</td>
+                        <td>{{ $producto->franquicia }}</td>
+                        <td><span class="tag">{{ $producto->categoria }}</span></td>
+                        <td>${{ number_format($producto->precio_actual, 2) }}</td>
+                        <td>{{ $producto->stock_total }}</td>
                     </tr>
                 @empty
                     <tr>

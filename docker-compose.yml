@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: gamestore_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    command: /var/www/html/docker/start.sh
+
+  db:
+    image: postgres:15
+    container_name: gamestore_db
+    environment:
+      POSTGRES_USER: proy2
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: gamestore
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/sql:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  postgres_data:

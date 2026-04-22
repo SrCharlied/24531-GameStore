@@ -2,37 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
+
 class ProductoController extends Controller
 {
     public function index()
     {
-        $productos = [
-            [
-                'codigo' => 'GS-001',
-                'nombre' => 'Malenia Blade of Miquella 1/7',
-                'franquicia' => 'Elden Ring',
-                'categoria' => 'Coleccion Premium',
-                'precio' => 129.99,
-                'stock' => 8,
-            ],
-            [
-                'codigo' => 'GS-002',
-                'nombre' => 'Tokai Teio Race Day Nendoroid',
-                'franquicia' => 'Uma Musume Pretty Derby',
-                'categoria' => 'Nendoroid',
-                'precio' => 54.50,
-                'stock' => 15,
-            ],
-            [
-                'codigo' => 'GS-003',
-                'nombre' => 'Raiden Shogun Narukami 1/7',
-                'franquicia' => 'Genshin Impact',
-                'categoria' => 'Escala 1/7',
-                'precio' => 124.80,
-                'stock' => 12,
-            ],
-        ];
+        $productos = [];
+        $dbError = null;
 
-        return view('pages.productos', compact('productos'));
+        try {
+            $sql = <<<'SQL'
+SELECT
+    p.ID_Producto,
+    p.Nombre,
+    f.Nombre_Franquicia AS franquicia,
+    COALESCE(STRING_AGG(DISTINCT c.Nombre_Categoria, ', ' ORDER BY c.Nombre_Categoria), 'Sin categoria') AS categoria,
+    p.Precio_Actual,
+    COALESCE(SUM(i.Cantidad_Actual), 0) AS stock_total
+FROM PRODUCTO p
+INNER JOIN FRANQUICIA f ON f.ID_Franquicia = p.ID_Franquicia
+LEFT JOIN PRODUCTO_CATEGORIA pc ON pc.ID_Producto = p.ID_Producto
+LEFT JOIN CATEGORIA c ON c.ID_Categoria = pc.ID_Categoria
+LEFT JOIN INVENTARIO i ON i.ID_Producto = p.ID_Producto
+GROUP BY p.ID_Producto, p.Nombre, f.Nombre_Franquicia, p.Precio_Actual
+ORDER BY p.ID_Producto
+SQL;
+
+            $productos = DB::select($sql);
+        } catch (\Throwable $exception) {
+            $dbError = 'No fue posible cargar el listado de productos.';
+        }
+
+        return view('pages.productos', compact('productos', 'dbError'));
     }
 }
