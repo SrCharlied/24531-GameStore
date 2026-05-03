@@ -41,7 +41,7 @@ CREATE TABLE PRODUCTO (
     Descripcion TEXT NOT NULL,
     URL_Imagen TEXT,
     ID_Franquicia INT NOT NULL,
-    Precio_Actual NUMERIC(10, 2) NOT NULL CHECK (Precio_Actual >= 0),
+    Precio_Actual NUMERIC(10, 2) NOT NULL CHECK (Precio_Actual > 0),
     CONSTRAINT fk_franquicia FOREIGN KEY (ID_Franquicia) 
         REFERENCES FRANQUICIA(ID_Franquicia) ON DELETE RESTRICT
 );
@@ -88,7 +88,7 @@ CREATE TABLE COMPRA_PRODUCTOS (
     ID_Compra INT NOT NULL,
     ID_Producto INT NOT NULL,
     Cantidad INT NOT NULL CHECK (Cantidad > 0),
-    Precio_Venta NUMERIC(10, 2) NOT NULL CHECK (Precio_Venta >= 0),
+    Precio_Venta NUMERIC(10, 2) NOT NULL CHECK (Precio_Venta > 0),
     PRIMARY KEY (ID_Compra, ID_Producto),
     FOREIGN KEY (ID_Compra) REFERENCES COMPRA(ID_Compra) ON DELETE RESTRICT,
     FOREIGN KEY (ID_Producto) REFERENCES PRODUCTO(ID_Producto) ON DELETE RESTRICT
