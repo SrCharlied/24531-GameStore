@@ -26,8 +26,10 @@ class ProductoController extends Controller
     {
         $franquicias = DB::select('SELECT ID_Franquicia, Nombre_Franquicia FROM FRANQUICIA ORDER BY Nombre_Franquicia');
         $categorias = DB::select('SELECT ID_Categoria, Nombre_Categoria FROM CATEGORIA ORDER BY Nombre_Categoria');
+        $locales = DB::select('SELECT ID_Local, Nombre, Zona FROM LOCAL ORDER BY Nombre');
+        $stock_por_local = [];
 
-        return view('pages.productos.create', compact('franquicias', 'categorias'));
+        return view('pages.productos.create', compact('franquicias', 'categorias', 'locales', 'stock_por_local'));
     }
 
     public function store(Request $request)
@@ -39,6 +41,8 @@ class ProductoController extends Controller
             'franquicia' => 'required|exists:franquicia,id_franquicia',
             'categorias' => 'required|array|min:1',
             'categorias.*' => 'exists:categoria,id_categoria',
+            'stock' => 'array',
+            'stock.*' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -66,6 +70,8 @@ class ProductoController extends Controller
                     [$producto->id_producto, $categoriaId]
                 );
             }
+
+            $this->upsertInventario($producto->id_producto, $request->input('stock', []));
 
             DB::commit();
 
@@ -95,8 +101,15 @@ class ProductoController extends Controller
 
         $franquicias = DB::select('SELECT ID_Franquicia, Nombre_Franquicia FROM FRANQUICIA ORDER BY Nombre_Franquicia');
         $categorias = DB::select('SELECT ID_Categoria, Nombre_Categoria FROM CATEGORIA ORDER BY Nombre_Categoria');
+        $locales = DB::select('SELECT ID_Local, Nombre, Zona FROM LOCAL ORDER BY Nombre');
 
-        return view('pages.productos.edit', compact('producto', 'categorias_ids', 'franquicias', 'categorias'));
+        $invRows = DB::select('SELECT ID_Local, Cantidad_Actual FROM INVENTARIO WHERE ID_Producto = ?', [$id]);
+        $stock_por_local = [];
+        foreach ($invRows as $r) {
+            $stock_por_local[$r->id_local] = $r->cantidad_actual;
+        }
+
+        return view('pages.productos.edit', compact('producto', 'categorias_ids', 'franquicias', 'categorias', 'locales', 'stock_por_local'));
     }
 
     public function update(Request $request, $id)
@@ -108,6 +121,8 @@ class ProductoController extends Controller
             'franquicia' => 'required|exists:franquicia,id_franquicia',
             'categorias' => 'required|array|min:1',
             'categorias.*' => 'exists:categoria,id_categoria',
+            'stock' => 'array',
+            'stock.*' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -139,6 +154,8 @@ class ProductoController extends Controller
                 );
             }
 
+            $this->upsertInventario($id, $request->input('stock', []));
+
             DB::commit();
 
             return redirect()->route('productos.index')->with('success', 'Producto actualizado exitosamente.');
@@ -160,6 +177,22 @@ class ProductoController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
+        }
+    }
+
+    private function upsertInventario(int $idProducto, array $stock): void
+    {
+        foreach ($stock as $idLocal => $cantidad) {
+            if ($cantidad === null || $cantidad === '') {
+                continue;
+            }
+            DB::insert(
+                'INSERT INTO INVENTARIO (ID_Producto, ID_Local, Cantidad_Actual)
+                 VALUES (?, ?, ?)
+                 ON CONFLICT (ID_Producto, ID_Local) DO UPDATE
+                 SET Cantidad_Actual = EXCLUDED.Cantidad_Actual',
+                [$idProducto, (int) $idLocal, (int) $cantidad]
+            );
         }
     }
 }

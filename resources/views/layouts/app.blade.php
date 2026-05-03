@@ -187,6 +187,133 @@
             line-height: 1.7;
         }
 
+        .form-field {
+            margin-bottom: 16px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-field input[type="text"],
+        .form-field input[type="number"],
+        .form-field textarea,
+        .form-field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .form-field input:focus,
+        .form-field textarea:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-error {
+            margin-top: 6px;
+            color: #b1442b;
+            font-size: 0.85rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface-alt);
+            color: var(--text);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            filter: brightness(0.97);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff8f2;
+        }
+
+        .btn-danger {
+            background: #a8351b;
+            border-color: #a8351b;
+            color: #fff8f2;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+        }
+
+        .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            margin: 0;
+        }
+
+        .alert-success {
+            background: #e7f0e1;
+            border-color: #a8c79b;
+            color: #2d5a1a;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .compra-line {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 10px;
+        }
+
+        .compra-line .form-field {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .compra-line {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .topbar {
                 flex-direction: column;
@@ -221,6 +348,13 @@
         </header>
 
         <main class="content">
+            @if (session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="alert">{{ session('error') }}</div>
+            @endif
+
             @yield('content')
         </main>
     </div>
