@@ -78,7 +78,7 @@ class ProductoController extends Controller
             return redirect()->route('productos.index')->with('success', 'Producto creado exitosamente.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error', 'Error al crear el producto: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Error al crear el producto: ' . $this->humanizeDbError($e));
         }
     }
 
@@ -161,7 +161,7 @@ class ProductoController extends Controller
             return redirect()->route('productos.index')->with('success', 'Producto actualizado exitosamente.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error', 'Error al actualizar el producto: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Error al actualizar el producto: ' . $this->humanizeDbError($e));
         }
     }
 
@@ -176,7 +176,7 @@ class ProductoController extends Controller
             return redirect()->route('productos.index')->with('success', 'Producto eliminado exitosamente.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al eliminar el producto: ' . $this->humanizeDbError($e));
         }
     }
 

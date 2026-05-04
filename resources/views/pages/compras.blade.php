@@ -9,7 +9,10 @@
                 <h2 style="margin-bottom: 4px;">Compras</h2>
                 <p class="lead">Historial real de compras calculado desde PostgreSQL.</p>
             </div>
-            <a href="{{ route('compras.crear') }}" class="btn btn-primary">+ Registrar compra</a>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{{ route('compras.export') }}" class="btn">Exportar CSV</a>
+                <a href="{{ route('compras.crear') }}" class="btn btn-primary">+ Registrar compra</a>
+            </div>
         </div>
 
         @if (!empty($dbError))

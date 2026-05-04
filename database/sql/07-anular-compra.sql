@@ -11,7 +11,7 @@ BEGIN
     SELECT ID_Local INTO v_local FROM COMPRA WHERE ID_Compra = p_id_compra;
 
     IF v_local IS NULL THEN
-        RAISE EXCEPTION 'La compra % no existe', p_id_compra;
+        RAISE EXCEPTION 'La compra #% no existe', p_id_compra;
     END IF;
 
     -- Sumar de vuelta al inventario

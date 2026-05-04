@@ -80,8 +80,62 @@ class CompraController extends Controller
 
             return redirect()->route('compras.index')->with('success', "Compra #{$idCompra} registrada exitosamente.");
         } catch (\Throwable $e) {
-            return redirect()->back()->withInput()->with('error', 'Error al registrar la compra: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Error al registrar la compra: ' . $this->humanizeDbError($e));
         }
+    }
+
+    public function export()
+    {
+        $rows = DB::select(
+            'SELECT
+                c.ID_Compra,
+                c.Fecha_Compra,
+                cl.Nombre_Cliente,
+                e.Nombre_Empleado,
+                l.Nombre AS local_nombre,
+                mp.Nombre AS metodo_pago,
+                p.Nombre AS producto,
+                cp.Cantidad,
+                cp.Precio_Venta,
+                (cp.Cantidad * cp.Precio_Venta) AS subtotal
+            FROM COMPRA c
+            INNER JOIN CLIENTE cl ON cl.ID_Cliente = c.ID_Cliente
+            INNER JOIN EMPLEADO e ON e.ID_Empleado = c.ID_Empleado
+            INNER JOIN LOCAL l ON l.ID_Local = c.ID_Local
+            INNER JOIN METODO_PAGO mp ON mp.ID_Metodo = c.ID_Metodo
+            INNER JOIN COMPRA_PRODUCTOS cp ON cp.ID_Compra = c.ID_Compra
+            INNER JOIN PRODUCTO p ON p.ID_Producto = cp.ID_Producto
+            ORDER BY c.Fecha_Compra DESC, c.ID_Compra DESC, p.Nombre'
+        );
+
+        $filename = 'compras_' . now()->format('Y-m-d_His') . '.csv';
+
+        return response()->streamDownload(function () use ($rows) {
+            // BOM para que Excel reconozca UTF-8
+            echo "\xEF\xBB\xBF";
+            $out = fopen('php://output', 'w');
+            fputcsv($out, [
+                'ID Compra', 'Fecha', 'Cliente', 'Empleado', 'Local',
+                'Metodo', 'Producto', 'Cantidad', 'Precio venta', 'Subtotal',
+            ]);
+            foreach ($rows as $r) {
+                fputcsv($out, [
+                    $r->id_compra,
+                    $r->fecha_compra,
+                    $r->nombre_cliente,
+                    $r->nombre_empleado,
+                    $r->local_nombre,
+                    $r->metodo_pago,
+                    $r->producto,
+                    $r->cantidad,
+                    $r->precio_venta,
+                    $r->subtotal,
+                ]);
+            }
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function destroy($id)
@@ -90,7 +144,7 @@ class CompraController extends Controller
             DB::statement('SELECT anular_compra(?)', [$id]);
             return redirect()->route('compras.index')->with('success', "Compra #{$id} anulada exitosamente.");
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Error al anular la compra: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al anular la compra: ' . $this->humanizeDbError($e));
         }
     }
 }

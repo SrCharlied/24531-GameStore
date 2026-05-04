@@ -19,6 +19,7 @@ Route::delete('/productos/{id}', [ProductoController::class, 'destroy'])->name('
 // Compras
 Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');
 Route::get('/compras/crear', [CompraController::class, 'create'])->name('compras.crear');
+Route::get('/compras/exportar', [CompraController::class, 'export'])->name('compras.export');
 Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
 Route::delete('/compras/{id}', [CompraController::class, 'destroy'])->name('compras.destroy');
 
