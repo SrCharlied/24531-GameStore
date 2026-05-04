@@ -339,11 +339,29 @@
                 <p>Sistema simple de inventario, compras y reportes en Laravel.</p>
             </div>
 
+            @php $rol = session('user.rol'); @endphp
+
             <nav class="nav">
-                <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
-                <a href="{{ route('productos.index') }}" class="{{ request()->routeIs('productos.*') ? 'active' : '' }}">Productos</a>
-                <a href="{{ route('compras.index') }}" class="{{ request()->routeIs('compras.*') ? 'active' : '' }}">Compras</a>
-                <a href="{{ route('reportes.index') }}" class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}">Reportes</a>
+                @if ($rol === 'admin')
+                    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
+                    <a href="{{ route('productos.index') }}" class="{{ request()->routeIs('productos.*') ? 'active' : '' }}">Productos</a>
+                @endif
+                @if ($rol)
+                    <a href="{{ route('compras.index') }}" class="{{ request()->routeIs('compras.*') ? 'active' : '' }}">Compras</a>
+                @endif
+                @if ($rol === 'admin')
+                    <a href="{{ route('reportes.index') }}" class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}">Reportes</a>
+                @endif
+
+                @if ($rol)
+                    <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.85rem;">
+                        {{ session('user.username') }} ({{ $rol }})
+                    </span>
+                    <form method="POST" action="{{ route('logout') }}" class="inline-form">
+                        @csrf
+                        <button type="submit" class="btn btn-sm">Cerrar sesión</button>
+                    </form>
+                @endif
             </nav>
         </header>
 
