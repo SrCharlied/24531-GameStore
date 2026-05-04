@@ -50,36 +50,36 @@ class CompraController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $productos = [];
+        $cantidades = [];
+        $precios = [];
+        foreach ($request->input('productos') as $item) {
+            $productos[]  = (int) $item['id'];
+            $cantidades[] = (int) $item['cantidad'];
+            $precios[]    = (float) $item['precio'];
+        }
+
         try {
-            $idCompra = DB::transaction(function () use ($request) {
-                $productos = [];
-                $cantidades = [];
-                $precios = [];
+            DB::beginTransaction();
 
-                foreach ($request->input('productos') as $item) {
-                    $productos[]  = (int) $item['id'];
-                    $cantidades[] = (int) $item['cantidad'];
-                    $precios[]    = (float) $item['precio'];
-                }
+            $row = DB::selectOne(
+                'SELECT registrar_compra(?, ?, ?, ?, ?, ?, ?) AS id_compra',
+                [
+                    $request->input('cliente'),
+                    $request->input('empleado'),
+                    $request->input('metodo'),
+                    $request->input('local'),
+                    '{' . implode(',', $productos)  . '}',
+                    '{' . implode(',', $cantidades) . '}',
+                    '{' . implode(',', $precios)    . '}',
+                ]
+            );
 
-                $row = DB::selectOne(
-                    'SELECT registrar_compra(?, ?, ?, ?, ?, ?, ?) AS id_compra',
-                    [
-                        $request->input('cliente'),
-                        $request->input('empleado'),
-                        $request->input('metodo'),
-                        $request->input('local'),
-                        '{' . implode(',', $productos)  . '}',
-                        '{' . implode(',', $cantidades) . '}',
-                        '{' . implode(',', $precios)    . '}',
-                    ]
-                );
+            DB::commit();
 
-                return $row->id_compra;
-            });
-
-            return redirect()->route('compras.index')->with('success', "Compra #{$idCompra} registrada exitosamente.");
+            return redirect()->route('compras.index')->with('success', "Compra #{$row->id_compra} registrada exitosamente.");
         } catch (\Throwable $e) {
+            DB::rollBack();
             return redirect()->back()->withInput()->with('error', 'Error al registrar la compra: ' . $this->humanizeDbError($e));
         }
     }
@@ -141,9 +141,13 @@ class CompraController extends Controller
     public function destroy($id)
     {
         try {
+            DB::beginTransaction();
             DB::statement('SELECT anular_compra(?)', [$id]);
+            DB::commit();
+
             return redirect()->route('compras.index')->with('success', "Compra #{$id} anulada exitosamente.");
         } catch (\Throwable $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'Error al anular la compra: ' . $this->humanizeDbError($e));
         }
     }
