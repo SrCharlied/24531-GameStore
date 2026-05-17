@@ -1,0 +1,56 @@
+# Stack de PRODUCCIÓN para GameStore
+#
+# Diferencias clave vs. docker-compose.yml (dev):
+#   - DB sin port mapping al exterior
+#   - API escucha solo en 127.0.0.1:8082 (Caddy del host la proxea)
+#   - NO se levanta el servicio web (Vite dev). El frontend se construye con
+#     `web-build` (one-shot) y queda como estático en /var/www/gamestore-client
+#   - restart: unless-stopped en api y db
+
+services:
+  db:
+    image: postgres:15
+    container_name: gamestore_db_prod
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - gamestore_db_data:/var/lib/postgresql/data
+      - ./database/sql:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+    container_name: gamestore_api_prod
+    ports:
+      # Solo localhost del host: Caddy es el único que puede llegar acá
+      - "127.0.0.1:8082:8000"
+    volumes:
+      # Solo storage para persistir logs y cache fuera del contenedor
+      - gamestore_storage:/var/www/html/storage
+    depends_on:
+      - db
+    env_file:
+      - .env
+    command: /var/www/html/docker/start.prod.sh
+    restart: unless-stopped
+
+  # One-shot: construye el frontend y deja el bundle en /var/www/gamestore-client
+  # Uso: docker compose -f docker-compose.prod.yml --profile build run --rm web-build
+  web-build:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./web:/app
+    environment:
+      # Vite usa URLs relativas en runtime, así que el VITE_API_URL queda vacío.
+      - VITE_API_URL=
+    command: sh -c "npm ci && npm run build"
+    profiles:
+      - build
+
+volumes:
+  gamestore_db_data:
+  gamestore_storage:

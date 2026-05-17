@@ -1,0 +1,42 @@
+# Snippet para AGREGAR al /etc/caddy/Caddyfile del servidor.
+# Pegalo al final del archivo, junto a los bloques existentes (seelescans, etc.).
+# Después: sudo systemctl reload caddy
+
+# ─── GameStore: SPA estática + API Laravel ────────────────────────────
+gamestore.servigtdev.com {
+    encode gzip
+
+    # /api/* y /sanctum/* → contenedor api Laravel en 127.0.0.1:8082
+    @api path /api/* /sanctum/*
+    handle @api {
+        reverse_proxy 127.0.0.1:8082 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host {host}
+        }
+
+        # Permitir uploads razonables (por si en el futuro hay imágenes de productos)
+        request_body {
+            max_size 5MB
+        }
+    }
+
+    # Resto: build estático de React con fallback SPA (React Router)
+    handle {
+        root * /var/www/gamestore-client
+        try_files {path} /index.html
+        file_server
+    }
+
+    # Cache largo para assets versionables (Vite los hashea)
+    @assets {
+        path *.css *.js *.png *.jpg *.jpeg *.svg *.webp *.woff2 *.ico
+    }
+    header @assets Cache-Control "public, max-age=86400"
+
+    log {
+        output file /var/log/caddy/gamestore.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

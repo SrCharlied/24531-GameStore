@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Habilita Sanctum SPA: cookies de sesión válidas para rutas /api/*
         $middleware->statefulApi();
 
+        // En producción, Caddy actúa como reverse proxy desde 127.0.0.1.
+        // Esto le dice a Laravel que confíe en los headers X-Forwarded-*
+        // (Proto, Host, For) para reconocer que la URL pública es HTTPS.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'auth.session' => \App\Http\Middleware\RequireAuth::class,
         ]);
