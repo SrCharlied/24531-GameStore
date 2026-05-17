@@ -24,7 +24,20 @@ services:
       - db
     command: /var/www/html/docker/start.sh
 
-  # web: se agrega en Fase 2 cuando exista el frontend React
+  web:
+    build:
+      context: ./web
+    container_name: gamestore_web
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    environment:
+      # Vacío = axios usa URLs relativas y Vite proxea /api/* y /sanctum/* al backend.
+      - VITE_API_URL=
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
