@@ -2,6 +2,10 @@
 
 Sistema de inventario y ventas para una tienda de figuras de videojuegos. Arquitectura de 3 capas: PostgreSQL como base de datos relacional (donde vive la lógica transaccional), Laravel como backend REST API, y React (Vite) como frontend SPA.
 
+## LINK A LA WEB
+
+https://gamestore.servigtdev.com
+
 ## 🌟 Características principales
 
 **Base de datos**
