@@ -28,7 +28,10 @@ services:
       # Solo localhost del host: Caddy es el único que puede llegar acá
       - "127.0.0.1:8082:8000"
     volumes:
-      # Solo storage para persistir logs y cache fuera del contenedor
+      # Mount del .env del host para que Laravel pueda leerlo y eventualmente
+      # escribir APP_KEY al primer arranque
+      - ./.env:/var/www/html/.env
+      # Storage persistido fuera del contenedor (logs Laravel, cache, sessions)
       - gamestore_storage:/var/www/html/storage
     depends_on:
       - db
