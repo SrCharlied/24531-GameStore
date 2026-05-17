@@ -11,7 +11,6 @@ gamestore.servigtdev.com {
     handle @api {
         reverse_proxy 127.0.0.1:8082 {
             header_up X-Forwarded-Proto https
-            header_up X-Forwarded-Host {host}
         }
 
         # Permitir uploads razonables (por si en el futuro hay imágenes de productos)

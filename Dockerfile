@@ -11,7 +11,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
 
-RUN chmod +x /var/www/html/docker/start.sh
+RUN chmod +x /var/www/html/docker/start.sh /var/www/html/docker/start.prod.sh
 
 EXPOSE 8000
 
