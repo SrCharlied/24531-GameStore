@@ -47,7 +47,8 @@ services:
     environment:
       # Vite usa URLs relativas en runtime, así que el VITE_API_URL queda vacío.
       - VITE_API_URL=
-    command: sh -c "npm ci && npm run build"
+    # npm install (no ci) porque el lockfile puede no existir aún en el repo
+    command: sh -c "npm install --no-audit --no-fund && npm run build"
     profiles:
       - build
 
