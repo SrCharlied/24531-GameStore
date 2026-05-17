@@ -1,27 +1,41 @@
 # GameStore
 
-Sistema de inventario y ventas para una tienda de figuras de videojuegos. Arquitectura de 3 capas: PostgreSQL como base de datos relacional (donde vive la lógica transaccional), Laravel como backend REST API, y React (próximamente) como frontend SPA.
+Sistema de inventario y ventas para una tienda de figuras de videojuegos. Arquitectura de 3 capas: PostgreSQL como base de datos relacional (donde vive la lógica transaccional), Laravel como backend REST API, y React (Vite) como frontend SPA.
 
 ## 🌟 Características principales
 
+**Base de datos**
 - 14 tablas con PK, FK, CHECK constraints (3FN)
 - Función transaccional `registrar_compra()` con doble protección (PL/pgSQL + CHECK)
 - Función `anular_compra()` para reversar ventas y restaurar inventario
 - Trigger de auditoría sobre cambios de precio
 - Vistas para encapsular agregaciones (`vw_producto_stock`, `vw_compra_total`)
+
+**Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
 - RBAC: dos roles (`admin` / `empleado`) con permisos diferenciados
-- Despliegue reproducible con Docker Compose
+- Manejo de errores con códigos HTTP correctos y mensajes JSON legibles
+
+**Frontend (React + Vite)**
+- React Router con rutas protegidas por sesión y por rol
+- Auth global con Context (`AuthProvider` + `useAuth`)
+- Carrito de líneas en "Nueva compra" con `useReducer` + `useMemo` + `useCallback`
+- Formularios controlados con validación cliente
+- 11 pruebas con Vitest (reducer, validación, componentes)
+- ESLint sin warnings
+
+**Infraestructura**
+- Despliegue reproducible con `docker compose up` (3 servicios: db + api + web)
+- Vite proxy hacia el backend → mismo origen desde el navegador (sin CORS para el usuario final)
 
 ## 📦 Cómo levantar el proyecto
 
 ### 📋 Requisitos
 
 - Docker Desktop (Windows/macOS) o Docker Engine + Compose v2 (Linux)
-- Puertos `8000` (API Laravel) y `5432` (PostgreSQL) libres
-- Más adelante: puerto `5173` (frontend Vite)
+- Puertos libres: `5173` (frontend Vite) · `8000` (API Laravel) · `5432` (PostgreSQL)
 
-> ⚠️ No necesitas PHP, Composer ni PostgreSQL instalados localmente. Todo corre dentro de los contenedores.
+> ⚠️ No necesitas PHP, Composer, Node ni PostgreSQL instalados localmente. Todo corre dentro de los contenedores.
 
 ### 🚀 Inicio rápido
 
@@ -31,7 +45,13 @@ cd PROYECTO2/24531-GameStore
 docker compose up --build -d
 ```
 
-La API queda disponible en `http://localhost:8000` y PostgreSQL en `localhost:5432`.
+Los servicios quedan disponibles en:
+
+| Servicio | URL | Notas |
+|---|---|---|
+| Frontend (React) | `http://localhost:5173` | **Abrir aquí.** Es la app que usa el usuario final. |
+| API (Laravel) | `http://localhost:8000` | Solo JSON. Se accede a través del proxy del frontend. |
+| PostgreSQL | `localhost:5432` | `proy2` / `secret`, base `gamestore` |
 
 > 💡 Las credenciales fijas de la rúbrica (`proy2` / `secret`) están definidas en `.env.example`. El archivo `.env` ya viene listo en el repositorio para que `docker compose up` funcione sin pasos previos.
 
@@ -55,29 +75,79 @@ docker exec -it gamestore_db psql -U proy2 -d gamestore
 docker exec -i gamestore_db psql -U proy2 -d gamestore < database/sql/04-views.sql
 ```
 
+## 🖥️ Frontend (React)
+
+La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el navegador solo habla con `localhost:5173`, y Vite reenvía internamente las llamadas `/api/*` y `/sanctum/*` al servicio `api`. Eso elimina problemas de CORS y de cookies cross-port en desarrollo.
+
+### Páginas y rutas
+
+| Ruta | Acceso | Componente |
+|---|---|---|
+| `/login` | público | `LoginPage` |
+| `/` | admin | `DashboardPage` (métricas) |
+| `/productos` | admin | `ProductosListPage` |
+| `/productos/nuevo` | admin | `ProductoFormPage` |
+| `/productos/:id/editar` | admin | `ProductoFormPage` |
+| `/compras` | empleado + admin | `ComprasListPage` (con botón Exportar CSV) |
+| `/compras/nueva` | empleado + admin | `CompraNuevaPage` (**carrito con `useReducer`**) |
+| `/reportes` | admin | `ReportesPage` |
+
+### Hooks y patrones
+
+- **`useState`** para el estado local de formularios y listas.
+- **`useEffect`** para hidratar datos al montar (catálogos, sesión, etc.).
+- **`useReducer`** en `CompraNuevaPage` para administrar las líneas del carrito con acciones `ADD_LINE`, `REMOVE_LINE`, `UPDATE_LINE`, `RESET`. El reducer vive en `src/reducers/carritoReducer.js` y se testea de forma aislada.
+- **`useMemo`** para calcular el total de la compra (suma de cantidad × precio) y para mapear precios por producto, sin recalcular en cada render.
+- **`useCallback`** para estabilizar los handlers `updateLine` / `removeLine` que se pasan a componentes hijos (`CompraLine`).
+- **`useContext`** vía `AuthContext` para el usuario logueado.
+
+### Comandos del frontend
+
+```bash
+# Tests (Vitest)
+docker exec gamestore_web npm test
+
+# Linter
+docker exec gamestore_web npm run lint
+```
+
 ## 📁 Estructura del proyecto
 
 Todo el proyecto vive bajo `24531-GameStore/`:
 
 ```text
 24531-GameStore/
-├── docker-compose.yml          # Orquesta db + api (web se añade en Fase 2)
-├── .env / .env.example         # Variables de entorno
-├── Dockerfile                  # Imagen PHP 8.3 + pdo_pgsql
-├── README.md                   # Este archivo
+├── docker-compose.yml          # Orquesta db + api + web
+├── .env / .env.example         # Variables de entorno (incluye proy2/secret)
+├── Dockerfile                  # Backend: PHP 8.3 + pdo_pgsql
+├── README.md
 ├── fases-v2.md                 # Plan de migración a React
 ├── app/
 │   ├── Http/Controllers/Api/   # Controllers JSON (Auth, Producto, Compra, ...)
-│   ├── Http/Controllers/       # Controllers Blade legacy
+│   ├── Http/Controllers/Controller.php  # Base con humanizeDbError()
 │   ├── Http/Middleware/RequireAuth.php
 │   └── Models/User.php         # Modelo Eloquent → tabla usuario
 ├── routes/
 │   ├── api.php                 # 15 endpoints REST
-│   └── web.php                 # Rutas Blade legacy (en desuso)
+│   └── web.php                 # Solo / informativo (la app es API-only)
 ├── database/sql/               # 9 scripts cargados por Postgres al init
 ├── docker/start.sh             # Entrypoint del contenedor api
-├── resources/views/            # Blade templates legacy
-└── web/                        # Frontend React (placeholder, Fase 2)
+├── web/                        # ── Frontend React + Vite ──
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── vite.config.js          # Incluye proxy a la API
+│   ├── eslint.config.js
+│   ├── index.html
+│   └── src/
+│       ├── main.jsx / App.jsx / index.css
+│       ├── api/client.js       # axios + CSRF interceptor
+│       ├── context/            # AuthContext + useAuth
+│       ├── components/         # Layout, RequireAuth (gate por rol)
+│       ├── pages/              # 7 páginas
+│       ├── reducers/carritoReducer.js
+│       ├── utils/validation.js
+│       └── test/               # 3 archivos Vitest (11 tests)
+└── _legacy/                    # Blade views/controllers archivados (no se ejecuta)
 ```
 
 ## 🔐 Autenticación
