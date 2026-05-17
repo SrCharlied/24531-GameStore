@@ -26,7 +26,7 @@ Sistema de inventario y ventas para una tienda de figuras de videojuegos. Proyec
 ### 🔽 Obtener el proyecto
 
 ```bash
-git clone -b WEB-React-API https://github.com/SrCharlied/24531-GameStore.git
+git clone <URL DEL REPO>
 cd 24531-GameStore
 ```
 
