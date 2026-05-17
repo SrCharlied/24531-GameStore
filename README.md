@@ -40,8 +40,8 @@ Sistema de inventario y ventas para una tienda de figuras de videojuegos. Arquit
 ### 🚀 Inicio rápido
 
 ```bash
-git clone <url-del-repo>
-cd PROYECTO2/24531-GameStore
+git clone -b WEB-React-API https://github.com/SrCharlied/24531-GameStore.git
+cd 24531-GameStore
 docker compose up --build -d
 ```
 
