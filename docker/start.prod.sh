@@ -9,6 +9,15 @@ set -e
 
 cd /var/www/html
 
+# El volumen de storage puede estar vacío al primer arranque (named volume
+# nuevo) y sobrescribir la estructura del image. Asegurar que existan
+# las carpetas que Laravel necesita.
+mkdir -p storage/framework/sessions \
+         storage/framework/cache/data \
+         storage/framework/views \
+         storage/app/public \
+         storage/logs
+
 if [ ! -f vendor/autoload.php ]; then
     composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
 fi

@@ -35,8 +35,10 @@ services:
       - gamestore_storage:/var/www/html/storage
     depends_on:
       - db
-    env_file:
-      - .env
+    # NO usamos env_file: el .env está mounted como volumen y Laravel lo lee
+    # directamente via phpdotenv. Si lo cargáramos también vía env_file, las
+    # env vars del proceso ganan sobre el .env, lo cual hace muy frágil
+    # cualquier cambio posterior (queda pegado el valor viejo).
     command: /var/www/html/docker/start.prod.sh
     restart: unless-stopped
 
