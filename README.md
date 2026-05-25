@@ -17,7 +17,7 @@ https://gamestore.servigtdev.com
 
 **Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
-- RBAC: dos roles (`admin` / `empleado`) con permisos diferenciados
+- RBAC: cinco roles de negocio (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) con responsabilidades diferenciadas
 - Manejo de errores con códigos HTTP correctos y mensajes JSON legibles
 
 **Frontend (React + Vite)**
@@ -160,10 +160,23 @@ El backend usa **Laravel Sanctum en modo SPA**: el cliente recibe una cookie de 
 
 ### 🔑 Credenciales de prueba
 
+Los roles de aplicación definidos para Proyecto 3 son:
+
+| Rol | Responsabilidad |
+|---|---|
+| `admin` | Control total del sistema |
+| `gerente` | Reportes, dashboard y consulta general |
+| `vendedor` | Registrar ventas y consultar compras |
+| `bodega` | Gestionar productos e inventario |
+| `auditor` | Solo lectura y auditoría |
+
 | Usuario | Contraseña | Rol | Acceso |
 |---|---|---|---|
-| `admin` | `admin123` | admin | Todos los endpoints |
-| `empleado` | `empleado123` | empleado | Solo `/api/compras*` y `/api/catalogos` |
+| `admin` | `admin123` | admin | Control total del sistema |
+| `gerente` | `gerente123` | gerente | Reportes, dashboard y consulta general |
+| `vendedor` | `vendedor123` | vendedor | Registro de ventas y consulta de compras |
+| `bodega` | `bodega123` | bodega | Gestión de productos e inventario |
+| `auditor` | `auditor123` | auditor | Solo lectura y auditoría |
 
 ### 🔄 Flujo de login (lo que hará el frontend)
 
@@ -295,7 +308,7 @@ PostgreSQL carga 9 scripts al inicializar el volumen (`database/sql/`):
 | `06-audit-trigger.sql` | Tabla `LOG_PRECIOS_PRODUCTO` y trigger `audit_precio_producto` |
 | `07-anular-compra.sql` | `anular_compra()` que reversa ventas |
 | `08-extra-data.sql` | Inventario completo + 40 compras adicionales en Ene-Abr 2026 |
-| `09-usuarios.sql` | Tabla `USUARIO` + `pgcrypto` para bcrypt |
+| `09-usuarios.sql` | Tabla `USUARIO`, cinco roles de aplicación y usuarios de prueba con `pgcrypto` para bcrypt |
 
 ### 📊 Volumen actual
 
@@ -306,7 +319,7 @@ PostgreSQL carga 9 scripts al inicializar el volumen (`database/sql/`):
 | Inventario | 650 |
 | Compra | 65 |
 | Compra_Productos | 145 |
-| Usuario | 2 |
+| Usuario | 5 |
 
 ## 🧪 Probar la API end-to-end con curl
 
