@@ -44,7 +44,7 @@ https://gamestore.servigtdev.com
 ### 🚀 Inicio rápido
 
 ```bash
-git clone -b WEB-React-API https://github.com/SrCharlied/24531-GameStore.git
+git clone -b proyecto-3 https://github.com/SrCharlied/24531-GameStore.git
 cd 24531-GameStore
 docker compose up --build -d
 ```
@@ -55,9 +55,9 @@ Los servicios quedan disponibles en:
 |---|---|---|
 | Frontend (React) | `http://localhost:5173` | **Abrir aquí.** Es la app que usa el usuario final. |
 | API (Laravel) | `http://localhost:8000` | Solo JSON. Se accede a través del proxy del frontend. |
-| PostgreSQL | `localhost:5432` | `proy2` / `secret`, base `gamestore` |
+| PostgreSQL | `localhost:5432` | `proy3` / `secret`, base `gamestore` |
 
-> 💡 Las credenciales fijas de la rúbrica (`proy2` / `secret`) están definidas en `.env.example`. El archivo `.env` ya viene listo en el repositorio para que `docker compose up` funcione sin pasos previos.
+> 💡 Las credenciales fijas de la rúbrica del Proyecto 3 (`proy3` / `secret`) están definidas en `.env.example`. El archivo `.env` ya viene listo en el repositorio para que `docker compose up` funcione sin pasos previos.
 
 ### 💡 Comandos útiles
 
@@ -73,10 +73,10 @@ docker compose down
 docker compose down -v && docker compose up -d
 
 # Conectarse a PostgreSQL
-docker exec -it gamestore_db psql -U proy2 -d gamestore
+docker exec -it gamestore_db psql -U proy3 -d gamestore
 
 # Aplicar un script SQL manualmente
-docker exec -i gamestore_db psql -U proy2 -d gamestore < database/sql/04-views.sql
+docker exec -i gamestore_db psql -U proy3 -d gamestore < database/sql/04-views.sql
 ```
 
 ## 🖥️ Frontend (React)
@@ -122,7 +122,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 ```text
 24531-GameStore/
 ├── docker-compose.yml          # Orquesta db + api + web
-├── .env / .env.example         # Variables de entorno (incluye proy2/secret)
+├── .env / .env.example         # Variables de entorno (incluye proy3/secret)
 ├── Dockerfile                  # Backend: PHP 8.3 + pdo_pgsql
 ├── README.md
 ├── fases-v2.md                 # Plan de migración a React

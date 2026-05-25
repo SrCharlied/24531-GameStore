@@ -3,7 +3,7 @@ services:
     image: postgres:15
     container_name: gamestore_db
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-proy2}
+      POSTGRES_USER: ${DB_USERNAME:-proy3}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
       POSTGRES_DB: ${DB_DATABASE:-gamestore}
     ports:
