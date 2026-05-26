@@ -11,9 +11,11 @@ https://gamestore.servigtdev.com
 **Base de datos**
 - 14 tablas con PK, FK, CHECK constraints (3FN)
 - Función transaccional `registrar_compra()` con doble protección (PL/pgSQL + CHECK)
+- Stored procedures `sp_registrar_compra()` y `sp_anular_compra()` para operaciones transaccionales de venta
 - Función `anular_compra()` para reversar ventas y restaurar inventario
 - Trigger de auditoría sobre cambios de precio
 - Vistas para encapsular agregaciones (`vw_producto_stock`, `vw_compra_total`)
+- Roles de base de datos (`rol_admin`, `rol_gerente`, `rol_vendedor`, `rol_bodega`, `rol_auditor`) con permisos granulares
 
 **Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
@@ -134,7 +136,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 ├── routes/
 │   ├── api.php                 # 15 endpoints REST
 │   └── web.php                 # Solo / informativo (la app es API-only)
-├── database/sql/               # 9 scripts cargados por Postgres al init
+├── database/sql/               # 10 scripts cargados por Postgres al init
 ├── docker/start.sh             # Entrypoint del contenedor api
 ├── web/                        # ── Frontend React + Vite ──
 │   ├── Dockerfile

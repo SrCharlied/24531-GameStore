@@ -1,4 +1,5 @@
 -- Función para anular una compra y devolver el inventario
+DROP PROCEDURE IF EXISTS sp_anular_compra(INT);
 DROP FUNCTION IF EXISTS anular_compra(INT);
 
 CREATE OR REPLACE FUNCTION anular_compra(p_id_compra INT)
@@ -31,3 +32,13 @@ BEGIN
     DELETE FROM COMPRA WHERE ID_Compra = p_id_compra;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Stored procedure equivalente para cumplir con el requisito de procedimientos almacenados.
+-- Mantiene la función anterior para no romper la API Laravel existente.
+CREATE OR REPLACE PROCEDURE sp_anular_compra(p_id_compra INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM anular_compra(p_id_compra);
+END;
+$$;

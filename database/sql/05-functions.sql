@@ -4,6 +4,7 @@
 -- Función: registrar_compra
 -- Permite registrar una compra completa con transaccionalidad completa
 -- Parámetros: arrays paralelos de productos, cantidades y precios
+DROP PROCEDURE IF EXISTS sp_registrar_compra(INT, INT, INT, INT, INT[], INT[], NUMERIC[]);
 DROP FUNCTION IF EXISTS registrar_compra(INT, INT, INT, INT, INT[], INT[], NUMERIC[]);
 
 CREATE OR REPLACE FUNCTION registrar_compra(
@@ -83,3 +84,30 @@ BEGIN
     RETURN v_id_compra;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Stored procedure equivalente para cumplir con el requisito de procedimientos almacenados.
+-- Mantiene la función anterior para no romper la API Laravel existente.
+CREATE OR REPLACE PROCEDURE sp_registrar_compra(
+    p_cliente INT,
+    p_empleado INT,
+    p_metodo INT,
+    p_local INT,
+    p_productos INT[],
+    p_cantidades INT[],
+    p_precios NUMERIC[],
+    OUT p_id_compra INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    p_id_compra := registrar_compra(
+        p_cliente,
+        p_empleado,
+        p_metodo,
+        p_local,
+        p_productos,
+        p_cantidades,
+        p_precios
+    );
+END;
+$$;
