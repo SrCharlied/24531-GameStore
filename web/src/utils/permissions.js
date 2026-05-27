@@ -2,6 +2,7 @@ const ROLE_PERMISSIONS = {
   admin: {
     dashboard: true,
     reportes: true,
+    auditoria: true,
     comprasRead: true,
     comprasWrite: true,
     productosRead: true,
@@ -10,6 +11,7 @@ const ROLE_PERMISSIONS = {
   gerente: {
     dashboard: true,
     reportes: true,
+    auditoria: false,
     comprasRead: true,
     comprasWrite: false,
     productosRead: true,
@@ -18,6 +20,7 @@ const ROLE_PERMISSIONS = {
   vendedor: {
     dashboard: false,
     reportes: false,
+    auditoria: false,
     comprasRead: true,
     comprasWrite: true,
     productosRead: false,
@@ -26,6 +29,7 @@ const ROLE_PERMISSIONS = {
   bodega: {
     dashboard: false,
     reportes: false,
+    auditoria: false,
     comprasRead: false,
     comprasWrite: false,
     productosRead: true,
@@ -34,6 +38,7 @@ const ROLE_PERMISSIONS = {
   auditor: {
     dashboard: true,
     reportes: true,
+    auditoria: true,
     comprasRead: true,
     comprasWrite: false,
     productosRead: true,

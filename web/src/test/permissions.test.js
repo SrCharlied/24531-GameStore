@@ -21,11 +21,13 @@ describe('permissions', () => {
     expect(can('gerente', 'comprasWrite')).toBe(false);
     expect(can('auditor', 'productosRead')).toBe(true);
     expect(can('auditor', 'productosWrite')).toBe(false);
+    expect(can('auditor', 'auditoria')).toBe(true);
   });
 
   it('resuelve listas de roles para rutas protegidas', () => {
     expect(rolesFor('productosWrite')).toEqual(['admin', 'bodega']);
     expect(rolesFor('comprasWrite')).toEqual(['admin', 'vendedor']);
+    expect(rolesFor('auditoria')).toEqual(['admin', 'auditor']);
     expect(canAny('gerente', ['dashboard', 'productosWrite'])).toBe(true);
   });
 });

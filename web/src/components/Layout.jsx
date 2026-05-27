@@ -25,6 +25,7 @@ export default function Layout() {
           {can(role, 'productosRead') && <NavLink to="/productos">Productos</NavLink>}
           {can(role, 'comprasRead') && <NavLink to="/compras">Compras</NavLink>}
           {can(role, 'reportes') && <NavLink to="/reportes">Reportes</NavLink>}
+          {can(role, 'auditoria') && <NavLink to="/auditoria/precios">Auditoría</NavLink>}
 
           {user && (
             <>

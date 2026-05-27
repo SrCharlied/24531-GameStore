@@ -175,6 +175,8 @@ tbody tr:hover { background: rgba(139, 92, 246, 0.05); }
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
 }
 .form-error { margin-top: 6px; color: var(--danger); font-size: 0.85rem; }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
 
 .form-actions { display: flex; gap: 12px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
 

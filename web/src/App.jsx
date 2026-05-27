@@ -9,6 +9,7 @@ import ProductoFormPage from './pages/ProductoFormPage';
 import ComprasListPage from './pages/ComprasListPage';
 import CompraNuevaPage from './pages/CompraNuevaPage';
 import ReportesPage from './pages/ReportesPage';
+import AuditoriaPreciosPage from './pages/AuditoriaPreciosPage';
 import { rolesFor } from './utils/permissions';
 
 export default function App() {
@@ -43,6 +44,10 @@ export default function App() {
 
               <Route element={<RequireAuth roles={rolesFor('reportes')} fallback="/compras" />}>
                 <Route path="/reportes" element={<ReportesPage />} />
+              </Route>
+
+              <Route element={<RequireAuth roles={rolesFor('auditoria')} fallback="/compras" />}>
+                <Route path="/auditoria/precios" element={<AuditoriaPreciosPage />} />
               </Route>
             </Route>
           </Route>

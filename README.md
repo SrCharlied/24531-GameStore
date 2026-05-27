@@ -21,6 +21,7 @@ https://gamestore.servigtdev.com
 **Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
 - RBAC: cinco roles de negocio (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) con responsabilidades diferenciadas y rutas protegidas por rol en backend/frontend
+- Endpoint y pantalla de auditoría para revisar cambios de precio registrados por trigger
 - Manejo de errores con códigos HTTP correctos y mensajes JSON legibles
 
 **Frontend (React + Vite)**
@@ -105,6 +106,7 @@ La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el na
 | `/compras` | admin, gerente, vendedor, auditor | `ComprasListPage` (con botón Exportar CSV) |
 | `/compras/nueva` | admin, vendedor | `CompraNuevaPage` (**carrito con `useReducer`**) |
 | `/reportes` | admin, gerente, auditor | `ReportesPage` |
+| `/auditoria/precios` | admin, auditor | `AuditoriaPreciosPage` |
 
 ### Hooks y patrones
 
@@ -137,7 +139,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 ├── README.md
 ├── fases-v2.md                 # Plan de migración a React
 ├── app/
-│   ├── Http/Controllers/Api/   # Controllers JSON (Auth, Producto, Compra, ...)
+│   ├── Http/Controllers/Api/   # Controllers JSON (Auth, Producto, Compra, Auditoria, ...)
 │   ├── Http/Controllers/Controller.php  # Base con humanizeDbError()
 │   ├── Http/Middleware/RequireAuth.php
 │   ├── Models/                 # Modelos Eloquent (User, Producto, Inventario, Compra, catálogos)
@@ -160,7 +162,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 │       ├── api/client.js       # axios + CSRF interceptor
 │       ├── context/            # AuthContext + useAuth
 │       ├── components/         # Layout, RequireAuth (gate por rol)
-│       ├── pages/              # 7 páginas
+│       ├── pages/              # 8 páginas
 │       ├── reducers/carritoReducer.js
 │       ├── utils/validation.js / permissions.js
 │       └── test/               # 4 archivos Vitest (15 tests)
@@ -189,7 +191,7 @@ Los roles de aplicación definidos para Proyecto 3 son:
 | `gerente` | `gerente123` | gerente | Dashboard, reportes y consulta de compras/productos |
 | `vendedor` | `vendedor123` | vendedor | Registro/anulación de ventas y consulta de compras |
 | `bodega` | `bodega123` | bodega | Gestión de productos e inventario |
-| `auditor` | `auditor123` | auditor | Solo lectura: dashboard, reportes, compras y productos |
+| `auditor` | `auditor123` | auditor | Solo lectura: dashboard, reportes, compras, productos y auditoría |
 
 ### 🔄 Flujo de login (lo que hará el frontend)
 
@@ -306,6 +308,12 @@ Los listados agregados siguen consumiendo vistas SQL (`vw_producto_stock`) porqu
 |---|---|---|---|
 | `GET` | `/api/dashboard` | admin, gerente, auditor | Métricas globales (productos, compras, locales, unidades totales) + últimas 5 compras |
 | `GET` | `/api/reportes` | admin, gerente, auditor | Top 5 locales por ingreso, top 5 productos, clientes destacados (con CTE + subqueries) |
+
+### Auditoría de precios (admin, auditor)
+
+| Método | Endpoint | Roles | Descripción |
+|---|---|---|---|
+| `GET` | `/api/auditoria/precios` | admin, auditor | Lista los últimos 100 cambios de precio registrados por `LOG_PRECIOS_PRODUCTO`, con filtros `q`, `desde`, `hasta` |
 
 ## 🚦 Códigos HTTP utilizados
 

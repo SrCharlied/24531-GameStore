@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuditoriaController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\CompraController;
@@ -34,6 +35,11 @@ Route::middleware('auth.session:admin,vendedor')->group(function () {
 Route::middleware('auth.session:admin,gerente,auditor')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/reportes',  [ReporteController::class, 'index']);
+});
+
+// Auditoría de cambios sensibles.
+Route::middleware('auth.session:admin,auditor')->group(function () {
+    Route::get('/auditoria/precios', [AuditoriaController::class, 'precios']);
 });
 
 // Productos: consulta para lectura; mutaciones solo admin/bodega.
