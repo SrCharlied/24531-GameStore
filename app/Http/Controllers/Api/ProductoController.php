@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventario;
+use App\Models\Producto;
 use App\Support\DatabaseRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,29 +20,32 @@ class ProductoController extends Controller
 
     public function show($id)
     {
-        $producto = DB::selectOne(
-            'SELECT ID_Producto AS id, Nombre AS nombre, Descripcion AS descripcion,
-                    Precio_Actual AS precio_actual, ID_Franquicia AS franquicia_id
-             FROM PRODUCTO WHERE ID_Producto = ?',
-            [$id]
-        );
+        $producto = Producto::with([
+            'categorias:id_categoria',
+            'inventarios:id_producto,id_local,cantidad_actual',
+        ])->find($id);
 
         if (!$producto) {
             return response()->json(['message' => 'Producto no encontrado.'], 404);
         }
 
-        $rows = DB::select('SELECT ID_Categoria FROM PRODUCTO_CATEGORIA WHERE ID_Producto = ?', [$id]);
-        $categorias_ids = array_map(fn ($r) => $r->id_categoria, $rows);
-
-        $invRows = DB::select('SELECT ID_Local, Cantidad_Actual FROM INVENTARIO WHERE ID_Producto = ?', [$id]);
         $stock_por_local = [];
-        foreach ($invRows as $r) {
-            $stock_por_local[$r->id_local] = $r->cantidad_actual;
+        foreach ($producto->inventarios as $inventario) {
+            $stock_por_local[$inventario->id_local] = $inventario->cantidad_actual;
         }
 
         return response()->json([
-            'producto'        => $producto,
-            'categorias_ids'  => $categorias_ids,
+            'producto' => [
+                'id' => $producto->id_producto,
+                'nombre' => $producto->nombre,
+                'descripcion' => $producto->descripcion,
+                'precio_actual' => $producto->precio_actual,
+                'franquicia_id' => $producto->id_franquicia,
+            ],
+            'categorias_ids' => $producto->categorias
+                ->pluck('id_categoria')
+                ->values()
+                ->all(),
             'stock_por_local' => $stock_por_local,
         ]);
     }
@@ -56,24 +61,14 @@ class ProductoController extends Controller
             DB::beginTransaction();
             DatabaseRole::applyForUser($request->user());
 
-            $producto = DB::selectOne(
-                'INSERT INTO PRODUCTO (Nombre, Descripcion, ID_Franquicia, Precio_Actual)
-                 VALUES (?, ?, ?, ?) RETURNING ID_Producto',
-                [
-                    $request->input('nombre'),
-                    $request->input('descripcion', ''),
-                    $request->input('franquicia'),
-                    $request->input('precio_actual'),
-                ]
-            );
+            $producto = Producto::create([
+                'nombre' => $request->input('nombre'),
+                'descripcion' => $request->input('descripcion', ''),
+                'id_franquicia' => $request->input('franquicia'),
+                'precio_actual' => $request->input('precio_actual'),
+            ]);
 
-            foreach ($request->input('categorias', []) as $categoriaId) {
-                DB::insert(
-                    'INSERT INTO PRODUCTO_CATEGORIA (ID_Producto, ID_Categoria) VALUES (?, ?)',
-                    [$producto->id_producto, $categoriaId]
-                );
-            }
-
+            $producto->categorias()->sync($request->input('categorias', []));
             $this->upsertInventario($producto->id_producto, $request->input('stock', []));
 
             DB::commit();
@@ -101,33 +96,21 @@ class ProductoController extends Controller
             DB::beginTransaction();
             DatabaseRole::applyForUser($request->user());
 
-            $affected = DB::update(
-                'UPDATE PRODUCTO
-                 SET Nombre = ?, Descripcion = ?, ID_Franquicia = ?, Precio_Actual = ?
-                 WHERE ID_Producto = ?',
-                [
-                    $request->input('nombre'),
-                    $request->input('descripcion', ''),
-                    $request->input('franquicia'),
-                    $request->input('precio_actual'),
-                    $id,
-                ]
-            );
-
-            if ($affected === 0) {
+            $producto = Producto::find($id);
+            if (!$producto) {
                 DB::rollBack();
                 return response()->json(['message' => 'Producto no encontrado.'], 404);
             }
 
-            DB::delete('DELETE FROM PRODUCTO_CATEGORIA WHERE ID_Producto = ?', [$id]);
-            foreach ($request->input('categorias', []) as $categoriaId) {
-                DB::insert(
-                    'INSERT INTO PRODUCTO_CATEGORIA (ID_Producto, ID_Categoria) VALUES (?, ?)',
-                    [$id, $categoriaId]
-                );
-            }
+            $producto->fill([
+                'nombre' => $request->input('nombre'),
+                'descripcion' => $request->input('descripcion', ''),
+                'id_franquicia' => $request->input('franquicia'),
+                'precio_actual' => $request->input('precio_actual'),
+            ])->save();
 
-            $this->upsertInventario($id, $request->input('stock', []));
+            $producto->categorias()->sync($request->input('categorias', []));
+            $this->upsertInventario($producto->id_producto, $request->input('stock', []));
 
             DB::commit();
 
@@ -143,13 +126,17 @@ class ProductoController extends Controller
         try {
             DB::beginTransaction();
             DatabaseRole::applyForUser($request->user());
-            DB::delete('DELETE FROM PRODUCTO_CATEGORIA WHERE ID_Producto = ?', [$id]);
-            $affected = DB::delete('DELETE FROM PRODUCTO WHERE ID_Producto = ?', [$id]);
-            DB::commit();
 
-            if ($affected === 0) {
+            $producto = Producto::find($id);
+            if (!$producto) {
+                DB::rollBack();
                 return response()->json(['message' => 'Producto no encontrado.'], 404);
             }
+
+            $producto->categorias()->detach();
+            $producto->delete();
+            DB::commit();
+
             return response()->json(['message' => 'Producto eliminado exitosamente.']);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -177,12 +164,15 @@ class ProductoController extends Controller
             if ($cantidad === null || $cantidad === '') {
                 continue;
             }
-            DB::insert(
-                'INSERT INTO INVENTARIO (ID_Producto, ID_Local, Cantidad_Actual)
-                 VALUES (?, ?, ?)
-                 ON CONFLICT (ID_Producto, ID_Local) DO UPDATE
-                 SET Cantidad_Actual = EXCLUDED.Cantidad_Actual',
-                [$idProducto, (int) $idLocal, (int) $cantidad]
+
+            Inventario::updateOrCreate(
+                [
+                    'id_producto' => $idProducto,
+                    'id_local' => (int) $idLocal,
+                ],
+                [
+                    'cantidad_actual' => (int) $cantidad,
+                ]
             );
         }
     }

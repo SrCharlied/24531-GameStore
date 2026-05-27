@@ -140,7 +140,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 │   ├── Http/Controllers/Api/   # Controllers JSON (Auth, Producto, Compra, ...)
 │   ├── Http/Controllers/Controller.php  # Base con humanizeDbError()
 │   ├── Http/Middleware/RequireAuth.php
-│   ├── Models/User.php         # Modelo Eloquent → tabla usuario
+│   ├── Models/                 # Modelos Eloquent (User, Producto, Inventario, Compra, catálogos)
 │   └── Support/DatabaseRole.php # Mapea roles de app a roles reales del DBMS
 ├── routes/
 │   ├── api.php                 # 15 endpoints REST
@@ -286,6 +286,19 @@ Body de `POST /api/productos`:
 ```
 
 > El objeto `stock` mapea `id_local → cantidad`. Valores `null` o vacíos se ignoran (no se crea fila en `INVENTARIO`).
+
+### Uso de ORM en productos
+
+El CRUD principal de productos usa Eloquent para cumplir la rúbrica de ORM:
+
+| Modelo | Uso |
+|---|---|
+| `Producto` | Crear, consultar detalle, actualizar y eliminar productos |
+| `Categoria` | Relación muchos-a-muchos con productos vía `producto_categoria` |
+| `Inventario` | Crear/actualizar stock por local con `updateOrCreate` |
+| `Franquicia` | Relación del producto con su franquicia |
+
+Los listados agregados siguen consumiendo vistas SQL (`vw_producto_stock`) porque son consultas de reporte/lectura.
 
 ### Reportes y métricas (solo `admin`)
 
