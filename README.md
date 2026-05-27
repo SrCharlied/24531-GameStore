@@ -20,7 +20,7 @@ https://gamestore.servigtdev.com
 
 **Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
-- RBAC: cinco roles de negocio (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) con responsabilidades diferenciadas
+- RBAC: cinco roles de negocio (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) con responsabilidades diferenciadas y rutas protegidas por rol en backend/frontend
 - Manejo de errores con códigos HTTP correctos y mensajes JSON legibles
 
 **Frontend (React + Vite)**
@@ -28,7 +28,7 @@ https://gamestore.servigtdev.com
 - Auth global con Context (`AuthProvider` + `useAuth`)
 - Carrito de líneas en "Nueva compra" con `useReducer` + `useMemo` + `useCallback`
 - Formularios controlados con validación cliente
-- 11 pruebas con Vitest (reducer, validación, componentes)
+- 15 pruebas con Vitest (reducer, validación, permisos, componentes)
 - ESLint sin warnings
 
 **Infraestructura**
@@ -98,13 +98,13 @@ La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el na
 | Ruta | Acceso | Componente |
 |---|---|---|
 | `/login` | público | `LoginPage` |
-| `/` | admin | `DashboardPage` (métricas) |
-| `/productos` | admin | `ProductosListPage` |
-| `/productos/nuevo` | admin | `ProductoFormPage` |
-| `/productos/:id/editar` | admin | `ProductoFormPage` |
-| `/compras` | empleado + admin | `ComprasListPage` (con botón Exportar CSV) |
-| `/compras/nueva` | empleado + admin | `CompraNuevaPage` (**carrito con `useReducer`**) |
-| `/reportes` | admin | `ReportesPage` |
+| `/` | admin, gerente, auditor | `DashboardPage` (métricas) |
+| `/productos` | admin, gerente, bodega, auditor | `ProductosListPage` |
+| `/productos/nuevo` | admin, bodega | `ProductoFormPage` |
+| `/productos/:id/editar` | admin, bodega | `ProductoFormPage` |
+| `/compras` | admin, gerente, vendedor, auditor | `ComprasListPage` (con botón Exportar CSV) |
+| `/compras/nueva` | admin, vendedor | `CompraNuevaPage` (**carrito con `useReducer`**) |
+| `/reportes` | admin, gerente, auditor | `ReportesPage` |
 
 ### Hooks y patrones
 
@@ -162,8 +162,8 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 │       ├── components/         # Layout, RequireAuth (gate por rol)
 │       ├── pages/              # 7 páginas
 │       ├── reducers/carritoReducer.js
-│       ├── utils/validation.js
-│       └── test/               # 3 archivos Vitest (11 tests)
+│       ├── utils/validation.js / permissions.js
+│       └── test/               # 4 archivos Vitest (15 tests)
 └── _legacy/                    # Blade views/controllers archivados (no se ejecuta)
 ```
 
@@ -186,10 +186,10 @@ Los roles de aplicación definidos para Proyecto 3 son:
 | Usuario | Contraseña | Rol | Acceso |
 |---|---|---|---|
 | `admin` | `admin123` | admin | Control total del sistema |
-| `gerente` | `gerente123` | gerente | Reportes, dashboard y consulta general |
-| `vendedor` | `vendedor123` | vendedor | Registro de ventas y consulta de compras |
+| `gerente` | `gerente123` | gerente | Dashboard, reportes y consulta de compras/productos |
+| `vendedor` | `vendedor123` | vendedor | Registro/anulación de ventas y consulta de compras |
 | `bodega` | `bodega123` | bodega | Gestión de productos e inventario |
-| `auditor` | `auditor123` | auditor | Solo lectura y auditoría |
+| `auditor` | `auditor123` | auditor | Solo lectura: dashboard, reportes, compras y productos |
 
 ### 🔄 Flujo de login (lo que hará el frontend)
 
@@ -235,14 +235,14 @@ Todos los endpoints `/api/*` devuelven JSON. El header `Accept: application/json
 |---|---|---|
 | `GET` | `/api/catalogos` | Una sola respuesta con franquicias, categorías, locales, clientes, empleados, métodos de pago y productos. Usado para llenar dropdowns. |
 
-### Compras (cualquier rol autenticado)
+### Compras
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/compras` | Listado con totales calculados (consume `vw_compra_total`) |
-| `POST` | `/api/compras` | Registra compra dentro de transacción. Llama `registrar_compra()` |
-| `DELETE` | `/api/compras/{id}` | Anula compra. Llama `anular_compra()`, devuelve inventario |
-| `GET` | `/api/compras/export.csv` | Exporta líneas de compra en CSV (UTF-8 con BOM) |
+| Método | Endpoint | Roles | Descripción |
+|---|---|---|---|
+| `GET` | `/api/compras` | admin, gerente, vendedor, auditor | Listado con totales calculados (consume `vw_compra_total`) |
+| `POST` | `/api/compras` | admin, vendedor | Registra compra dentro de transacción. Llama `registrar_compra()` |
+| `DELETE` | `/api/compras/{id}` | admin, vendedor | Anula compra. Llama `anular_compra()`, devuelve inventario |
+| `GET` | `/api/compras/export.csv` | admin, gerente, vendedor, auditor | Exporta líneas de compra en CSV (UTF-8 con BOM) |
 
 Body de `POST /api/compras`:
 ```json
@@ -263,15 +263,15 @@ Respuestas:
 - `422`: `{ "errors": { "cliente": [...], "productos.*.cantidad": [...] } }` (validación)
 - `422`: `{ "message": "Stock insuficiente de \"X\" en el local \"Y\": disponibles N, solicitados M" }` (error de la función SQL)
 
-### Productos (solo `admin`)
+### Productos
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/productos` | Listado con stock total agregado (consume `vw_producto_stock`) |
-| `GET` | `/api/productos/{id}` | Detalle + categorías + stock por local (para edit form) |
-| `POST` | `/api/productos` | Crear producto con categorías y stock por local (UPSERT) |
-| `PUT` | `/api/productos/{id}` | Actualizar |
-| `DELETE` | `/api/productos/{id}` | Eliminar (CASCADE limpia inventario y categorías) |
+| Método | Endpoint | Roles | Descripción |
+|---|---|---|---|
+| `GET` | `/api/productos` | admin, gerente, bodega, auditor | Listado con stock total agregado (consume `vw_producto_stock`) |
+| `GET` | `/api/productos/{id}` | admin, gerente, bodega, auditor | Detalle + categorías + stock por local (para edit form) |
+| `POST` | `/api/productos` | admin, bodega | Crear producto con categorías y stock por local (UPSERT) |
+| `PUT` | `/api/productos/{id}` | admin, bodega | Actualizar |
+| `DELETE` | `/api/productos/{id}` | admin, bodega | Eliminar (CASCADE limpia inventario y categorías) |
 
 Body de `POST /api/productos`:
 ```json
@@ -300,12 +300,12 @@ El CRUD principal de productos usa Eloquent para cumplir la rúbrica de ORM:
 
 Los listados agregados siguen consumiendo vistas SQL (`vw_producto_stock`) porque son consultas de reporte/lectura.
 
-### Reportes y métricas (solo `admin`)
+### Reportes y métricas
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/dashboard` | Métricas globales (productos, compras, locales, unidades totales) + últimas 5 compras |
-| `GET` | `/api/reportes` | Top 5 locales por ingreso, top 5 productos, clientes destacados (con CTE + subqueries) |
+| Método | Endpoint | Roles | Descripción |
+|---|---|---|---|
+| `GET` | `/api/dashboard` | admin, gerente, auditor | Métricas globales (productos, compras, locales, unidades totales) + últimas 5 compras |
+| `GET` | `/api/reportes` | admin, gerente, auditor | Top 5 locales por ingreso, top 5 productos, clientes destacados (con CTE + subqueries) |
 
 ## 🚦 Códigos HTTP utilizados
 
@@ -398,9 +398,11 @@ Devuelve cantidades al inventario del local correspondiente y borra la compra. L
 
 Sobre `PRODUCTO`. Cualquier `UPDATE` que cambie `Precio_Actual` se registra automáticamente en `LOG_PRECIOS_PRODUCTO` con valor anterior, nuevo y timestamp.
 
-### 🧩 Aplicación de roles DBMS desde Laravel
+### 🧩 Aplicación de RBAC y roles DBMS desde Laravel
 
 El archivo `app/Support/DatabaseRole.php` traduce el rol de aplicación (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) al rol real de PostgreSQL (`rol_admin`, `rol_gerente`, etc.).
+
+El middleware `auth.session` acepta uno o varios roles separados por coma (`auth.session:admin,bodega`). Las rutas REST separan lectura y escritura para que el frontend no muestre acciones que PostgreSQL rechazaría por permisos.
 
 En operaciones críticas de escritura, los controladores abren una transacción y ejecutan:
 

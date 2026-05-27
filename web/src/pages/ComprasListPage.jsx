@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useAuth } from '../context/useAuth';
+import { can } from '../utils/permissions';
 
 export default function ComprasListPage() {
+  const { user } = useAuth();
   const [compras, setCompras] = useState([]);
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
+  const canWriteCompras = can(user?.rol, 'comprasWrite');
 
   const load = useCallback(() => {
     api.get('/api/compras')
@@ -37,7 +41,9 @@ export default function ComprasListPage() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href={csvUrl} className="btn">Exportar CSV</a>
-          <Link to="/compras/nueva" className="btn btn-primary">+ Registrar compra</Link>
+          {canWriteCompras && (
+            <Link to="/compras/nueva" className="btn btn-primary">+ Registrar compra</Link>
+          )}
         </div>
       </div>
 
@@ -57,7 +63,7 @@ export default function ComprasListPage() {
             <th>Local</th>
             <th>Fecha</th>
             <th>Total</th>
-            <th>Acciones</th>
+            <th>{canWriteCompras ? 'Acciones' : 'Modo'}</th>
           </tr>
         </thead>
         <tbody>
@@ -72,9 +78,13 @@ export default function ComprasListPage() {
               <td>{new Date(c.fecha_compra).toLocaleString()}</td>
               <td>${Number(c.total_compra).toFixed(2)}</td>
               <td>
-                <button type="button" className="btn btn-sm btn-danger" onClick={() => handleAnular(c.id_compra)}>
-                  Anular
-                </button>
+                {canWriteCompras ? (
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleAnular(c.id_compra)}>
+                    Anular
+                  </button>
+                ) : (
+                  <span className="tag">Solo lectura</span>
+                )}
               </td>
             </tr>
           ))}

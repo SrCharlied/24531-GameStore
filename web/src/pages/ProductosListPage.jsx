@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useAuth } from '../context/useAuth';
+import { can } from '../utils/permissions';
 
 export default function ProductosListPage() {
+  const { user } = useAuth();
   const [productos, setProductos] = useState([]);
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
+  const canWriteProducts = can(user?.rol, 'productosWrite');
 
   const load = useCallback(() => {
     api.get('/api/productos')
@@ -33,7 +37,9 @@ export default function ProductosListPage() {
           <h2 style={{ marginBottom: 4 }}>Productos</h2>
           <p className="lead">Listado con stock total y categorías.</p>
         </div>
-        <Link to="/productos/nuevo" className="btn btn-primary">+ Crear producto</Link>
+        {canWriteProducts && (
+          <Link to="/productos/nuevo" className="btn btn-primary">+ Crear producto</Link>
+        )}
       </div>
 
       {error && <div className="alert" style={{ marginTop: 12 }}>{error}</div>}
@@ -52,7 +58,7 @@ export default function ProductosListPage() {
             <th>Categoría</th>
             <th>Precio</th>
             <th>Stock</th>
-            <th>Acciones</th>
+            <th>{canWriteProducts ? 'Acciones' : 'Modo'}</th>
           </tr>
         </thead>
         <tbody>
@@ -67,12 +73,16 @@ export default function ProductosListPage() {
               <td>${Number(p.precio_actual).toFixed(2)}</td>
               <td>{p.stock_total}</td>
               <td>
-                <div className="row-actions">
-                  <Link to={`/productos/${p.id_producto}/editar`} className="btn btn-sm">Editar</Link>
-                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id_producto)}>
-                    Eliminar
-                  </button>
-                </div>
+                {canWriteProducts ? (
+                  <div className="row-actions">
+                    <Link to={`/productos/${p.id_producto}/editar`} className="btn btn-sm">Editar</Link>
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id_producto)}>
+                      Eliminar
+                    </button>
+                  </div>
+                ) : (
+                  <span className="tag">Solo lectura</span>
+                )}
               </td>
             </tr>
           ))}

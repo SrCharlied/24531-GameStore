@@ -17,21 +17,33 @@ Route::middleware('auth.session')->group(function () {
     Route::get('/me',      [AuthController::class, 'me']);
 
     Route::get('/catalogos', [CatalogoController::class, 'index']);
+});
 
+// Compras: lectura para roles comerciales/auditoría; escritura solo admin/vendedor.
+Route::middleware('auth.session:admin,gerente,vendedor,auditor')->group(function () {
     Route::get('/compras',             [CompraController::class, 'index']);
-    Route::post('/compras',            [CompraController::class, 'store']);
-    Route::delete('/compras/{id}',     [CompraController::class, 'destroy']);
     Route::get('/compras/export.csv',  [CompraController::class, 'export']);
 });
 
-// Solo admin
-Route::middleware('auth.session:admin')->group(function () {
+Route::middleware('auth.session:admin,vendedor')->group(function () {
+    Route::post('/compras',            [CompraController::class, 'store']);
+    Route::delete('/compras/{id}',     [CompraController::class, 'destroy']);
+});
+
+// Reportes: roles con permiso de lectura global.
+Route::middleware('auth.session:admin,gerente,auditor')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/reportes',  [ReporteController::class, 'index']);
+});
 
+// Productos: consulta para lectura; mutaciones solo admin/bodega.
+Route::middleware('auth.session:admin,gerente,bodega,auditor')->group(function () {
     Route::get('/productos',           [ProductoController::class, 'index']);
-    Route::post('/productos',          [ProductoController::class, 'store']);
     Route::get('/productos/{id}',      [ProductoController::class, 'show']);
+});
+
+Route::middleware('auth.session:admin,bodega')->group(function () {
+    Route::post('/productos',          [ProductoController::class, 'store']);
     Route::put('/productos/{id}',      [ProductoController::class, 'update']);
     Route::delete('/productos/{id}',   [ProductoController::class, 'destroy']);
 });

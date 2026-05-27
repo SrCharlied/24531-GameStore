@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import { can } from '../utils/permissions';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -10,7 +11,7 @@ export default function Layout() {
     navigate('/login');
   }
 
-  const isAdmin = user?.rol === 'admin';
+  const role = user?.rol;
 
   return (
     <div className="wrapper">
@@ -20,10 +21,10 @@ export default function Layout() {
           <p>Sistema simple de inventario, compras y reportes.</p>
         </div>
         <nav className="nav">
-          {isAdmin && <NavLink to="/" end>Dashboard</NavLink>}
-          {isAdmin && <NavLink to="/productos">Productos</NavLink>}
-          <NavLink to="/compras">Compras</NavLink>
-          {isAdmin && <NavLink to="/reportes">Reportes</NavLink>}
+          {can(role, 'dashboard') && <NavLink to="/" end>Dashboard</NavLink>}
+          {can(role, 'productosRead') && <NavLink to="/productos">Productos</NavLink>}
+          {can(role, 'comprasRead') && <NavLink to="/compras">Compras</NavLink>}
+          {can(role, 'reportes') && <NavLink to="/reportes">Reportes</NavLink>}
 
           {user && (
             <>

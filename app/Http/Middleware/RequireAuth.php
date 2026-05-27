@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class RequireAuth
 {
-    public function handle(Request $request, Closure $next, ?string $role = null)
+    public function handle(Request $request, Closure $next, ?string $role = null, string ...$extraRoles)
     {
         $isApi = $request->is('api/*') || $request->expectsJson();
 
@@ -25,17 +25,24 @@ class RequireAuth
             if ($isApi) {
                 return response()->json(['message' => 'No autenticado.'], 401);
             }
-            return redirect()->route('login.show')
+            return redirect('/login')
                 ->with('error', 'Debes iniciar sesión para continuar.');
         }
 
-        // 3) Verificación de rol cuando aplica.
-        if ($role !== null && $rol !== $role) {
-            if ($isApi) {
-                return response()->json(['message' => 'No tienes permiso para acceder a esa sección.'], 403);
+        // 3) Verificación de roles cuando aplica.
+        //    Permite declarar varios roles en rutas: auth.session:admin,gerente
+        if ($role !== null) {
+            $allowedRoles = array_filter(array_map(
+                'trim',
+                array_merge(explode(',', $role), $extraRoles)
+            ));
+            if (!in_array($rol, $allowedRoles, true)) {
+                if ($isApi) {
+                    return response()->json(['message' => 'No tienes permiso para acceder a esa sección.'], 403);
+                }
+                return redirect('/compras')
+                    ->with('error', 'No tienes permiso para acceder a esa sección.');
             }
-            return redirect()->route('compras.index')
-                ->with('error', 'No tienes permiso para acceder a esa sección.');
         }
 
         return $next($request);
