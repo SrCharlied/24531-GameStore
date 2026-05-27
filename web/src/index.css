@@ -120,6 +120,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; }
 .grid { display: grid; gap: 16px; }
 .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid.auto-cards { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 
 .card {
   background: var(--surface-alt);
@@ -127,12 +128,20 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.04em; }
   border-radius: 16px;
   padding: 18px;
 }
+.card-danger {
+  border-color: rgba(248, 113, 113, 0.65);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.12), var(--surface-alt));
+}
 .metric {
   font-family: var(--font-display); font-weight: 900;
   font-size: 2.2rem; margin: 8px 0 0;
   background: linear-gradient(90deg, var(--accent) 0%, var(--cyan) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+.metric-danger {
+  background: linear-gradient(90deg, #fca5a5 0%, var(--danger) 100%);
+  -webkit-background-clip: text; background-clip: text;
 }
 .eyebrow {
   margin: 0; color: var(--muted);
@@ -153,6 +162,16 @@ tbody tr:hover { background: rgba(139, 92, 246, 0.05); }
   display: inline-block; padding: 5px 12px; border-radius: 999px;
   background: var(--accent-soft); color: var(--accent);
   font-size: 0.78rem; border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.tag-danger {
+  background: rgba(248, 113, 113, 0.14);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fca5a5;
+}
+.tag-warning {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fde68a;
 }
 
 .form-field { margin-bottom: 16px; }

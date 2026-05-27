@@ -10,11 +10,16 @@ class DashboardController extends Controller
     public function index()
     {
         $summary = DB::selectOne(
-            'SELECT
+            "SELECT
                 (SELECT COUNT(*) FROM PRODUCTO) AS productos_activos,
                 (SELECT COUNT(*) FROM COMPRA) AS compras_registradas,
                 (SELECT COUNT(*) FROM LOCAL) AS locales_monitoreados,
-                (SELECT COALESCE(SUM(Cantidad_Actual), 0) FROM INVENTARIO) AS unidades_stock'
+                (SELECT COALESCE(SUM(Cantidad_Actual), 0) FROM INVENTARIO) AS unidades_stock,
+                (SELECT COUNT(*) FROM vw_producto_stock WHERE stock_total = 0) AS productos_sin_stock,
+                (SELECT COUNT(*) FROM vw_producto_stock WHERE stock_total BETWEEN 1 AND 10) AS productos_stock_bajo,
+                (SELECT COALESCE(SUM(total_compra), 0)
+                 FROM vw_compra_total
+                 WHERE fecha_compra >= date_trunc('month', CURRENT_DATE)) AS ingresos_mes"
         );
 
         $activity = DB::select(
@@ -25,9 +30,18 @@ class DashboardController extends Controller
              ORDER BY c.Fecha_Compra DESC LIMIT 5'
         );
 
+        $stockAlerts = DB::select(
+            'SELECT id_producto, nombre, franquicia, categoria, precio_actual, stock_total
+             FROM vw_producto_stock
+             WHERE stock_total <= 10
+             ORDER BY stock_total ASC, nombre ASC
+             LIMIT 8'
+        );
+
         return response()->json([
-            'summary'  => $summary,
-            'activity' => $activity,
+            'summary'      => $summary,
+            'activity'     => $activity,
+            'stock_alerts' => $stockAlerts,
         ]);
     }
 }

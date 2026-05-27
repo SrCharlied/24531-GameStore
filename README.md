@@ -21,6 +21,8 @@ https://gamestore.servigtdev.com
 **Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
 - RBAC: cinco roles de negocio (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) con responsabilidades diferenciadas y rutas protegidas por rol en backend/frontend
+- Dashboard con alertas de inventario e ingresos del mes
+- Reportes comerciales filtrables por local y rango de fechas
 - Endpoint y pantalla de auditoría para revisar cambios de precio registrados por trigger
 - Manejo de errores con códigos HTTP correctos y mensajes JSON legibles
 
@@ -99,13 +101,13 @@ La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el na
 | Ruta | Acceso | Componente |
 |---|---|---|
 | `/login` | público | `LoginPage` |
-| `/` | admin, gerente, auditor | `DashboardPage` (métricas) |
+| `/` | admin, gerente, auditor | `DashboardPage` (métricas + alertas de inventario) |
 | `/productos` | admin, gerente, bodega, auditor | `ProductosListPage` |
 | `/productos/nuevo` | admin, bodega | `ProductoFormPage` |
 | `/productos/:id/editar` | admin, bodega | `ProductoFormPage` |
 | `/compras` | admin, gerente, vendedor, auditor | `ComprasListPage` (con botón Exportar CSV) |
 | `/compras/nueva` | admin, vendedor | `CompraNuevaPage` (**carrito con `useReducer`**) |
-| `/reportes` | admin, gerente, auditor | `ReportesPage` |
+| `/reportes` | admin, gerente, auditor | `ReportesPage` (filtros por local y fechas) |
 | `/auditoria/precios` | admin, auditor | `AuditoriaPreciosPage` |
 
 ### Hooks y patrones
@@ -306,8 +308,8 @@ Los listados agregados siguen consumiendo vistas SQL (`vw_producto_stock`) porqu
 
 | Método | Endpoint | Roles | Descripción |
 |---|---|---|---|
-| `GET` | `/api/dashboard` | admin, gerente, auditor | Métricas globales (productos, compras, locales, unidades totales) + últimas 5 compras |
-| `GET` | `/api/reportes` | admin, gerente, auditor | Top 5 locales por ingreso, top 5 productos, clientes destacados (con CTE + subqueries) |
+| `GET` | `/api/dashboard` | admin, gerente, auditor | Métricas globales, ingresos del mes, conteo de stock crítico, alertas de inventario y últimas 5 compras |
+| `GET` | `/api/reportes` | admin, gerente, auditor | Top 5 locales por ingreso, top 5 productos, clientes destacados (con CTE + subqueries) y filtros `local`, `desde`, `hasta` |
 
 ### Auditoría de precios (admin, auditor)
 
