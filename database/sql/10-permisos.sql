@@ -22,6 +22,10 @@ BEGIN
     END IF;
 END $$;
 
+-- Permitir que el usuario de conexión de Laravel/PostgreSQL pueda activar
+-- el perfil correspondiente con SET LOCAL ROLE dentro de cada transacción.
+GRANT rol_admin, rol_gerente, rol_vendedor, rol_bodega, rol_auditor TO CURRENT_USER;
+
 -- Partir de una base explícita para que el script sea reproducible.
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE ON SCHEMA public TO rol_admin, rol_gerente, rol_vendedor, rol_bodega, rol_auditor;
@@ -56,7 +60,7 @@ GRANT UPDATE (Cantidad_Actual) ON INVENTARIO TO rol_vendedor;
 GRANT USAGE, SELECT ON SEQUENCE compra_id_compra_seq TO rol_vendedor;
 GRANT EXECUTE ON FUNCTION registrar_compra(INT, INT, INT, INT, INT[], INT[], NUMERIC[]) TO rol_vendedor;
 GRANT EXECUTE ON FUNCTION anular_compra(INT) TO rol_vendedor;
-GRANT EXECUTE ON PROCEDURE sp_registrar_compra(INT, INT, INT, INT, INT[], INT[], NUMERIC[], OUT INT) TO rol_vendedor;
+GRANT EXECUTE ON PROCEDURE sp_registrar_compra(INT, INT, INT, INT, INT[], INT[], NUMERIC[]) TO rol_vendedor;
 GRANT EXECUTE ON PROCEDURE sp_anular_compra(INT) TO rol_vendedor;
 
 -- Bodega: administra productos, categorías, proveedores e inventario.

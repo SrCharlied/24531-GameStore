@@ -16,6 +16,7 @@ https://gamestore.servigtdev.com
 - Trigger de auditoría sobre cambios de precio
 - Vistas para encapsular agregaciones (`vw_producto_stock`, `vw_compra_total`)
 - Roles de base de datos (`rol_admin`, `rol_gerente`, `rol_vendedor`, `rol_bodega`, `rol_auditor`) con permisos granulares
+- El backend aplica `SET LOCAL ROLE` en operaciones críticas para que PostgreSQL haga cumplir los permisos reales
 
 **Backend (Laravel API)**
 - API REST completa con autenticación SPA (Laravel Sanctum + cookies)
@@ -139,7 +140,8 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 │   ├── Http/Controllers/Api/   # Controllers JSON (Auth, Producto, Compra, ...)
 │   ├── Http/Controllers/Controller.php  # Base con humanizeDbError()
 │   ├── Http/Middleware/RequireAuth.php
-│   └── Models/User.php         # Modelo Eloquent → tabla usuario
+│   ├── Models/User.php         # Modelo Eloquent → tabla usuario
+│   └── Support/DatabaseRole.php # Mapea roles de app a roles reales del DBMS
 ├── routes/
 │   ├── api.php                 # 15 endpoints REST
 │   └── web.php                 # Solo / informativo (la app es API-only)
@@ -382,6 +384,24 @@ Devuelve cantidades al inventario del local correspondiente y borra la compra. L
 ### 🔔 Trigger `audit_precio_producto`
 
 Sobre `PRODUCTO`. Cualquier `UPDATE` que cambie `Precio_Actual` se registra automáticamente en `LOG_PRECIOS_PRODUCTO` con valor anterior, nuevo y timestamp.
+
+### 🧩 Aplicación de roles DBMS desde Laravel
+
+El archivo `app/Support/DatabaseRole.php` traduce el rol de aplicación (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) al rol real de PostgreSQL (`rol_admin`, `rol_gerente`, etc.).
+
+En operaciones críticas de escritura, los controladores abren una transacción y ejecutan:
+
+```sql
+SET LOCAL ROLE rol_xxx;
+```
+
+De esa forma, PostgreSQL valida los permisos reales durante la transacción, no solo Laravel o React. Actualmente se aplica en:
+
+- `CompraController@store`
+- `CompraController@destroy`
+- `ProductoController@store`
+- `ProductoController@update`
+- `ProductoController@destroy`
 
 ## 💾 Backup y restauración
 

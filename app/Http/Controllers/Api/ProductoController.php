@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\DatabaseRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -53,6 +54,7 @@ class ProductoController extends Controller
 
         try {
             DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
 
             $producto = DB::selectOne(
                 'INSERT INTO PRODUCTO (Nombre, Descripcion, ID_Franquicia, Precio_Actual)
@@ -97,6 +99,7 @@ class ProductoController extends Controller
 
         try {
             DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
 
             $affected = DB::update(
                 'UPDATE PRODUCTO
@@ -135,10 +138,11 @@ class ProductoController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
             DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
             DB::delete('DELETE FROM PRODUCTO_CATEGORIA WHERE ID_Producto = ?', [$id]);
             $affected = DB::delete('DELETE FROM PRODUCTO WHERE ID_Producto = ?', [$id]);
             DB::commit();

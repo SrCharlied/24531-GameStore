@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\DatabaseRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -43,6 +44,7 @@ class CompraController extends Controller
 
         try {
             DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
 
             $row = DB::selectOne(
                 'SELECT registrar_compra(?, ?, ?, ?, ?, ?, ?) AS id_compra',
@@ -69,10 +71,11 @@ class CompraController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
             DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
             DB::statement('SELECT anular_compra(?)', [$id]);
             DB::commit();
 
