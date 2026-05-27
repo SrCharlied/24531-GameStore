@@ -33,6 +33,7 @@ https://gamestore.servigtdev.com
 **Infraestructura**
 - Despliegue reproducible con `docker compose up` (3 servicios: db + api + web)
 - Vite proxy hacia el backend → mismo origen desde el navegador (sin CORS para el usuario final)
+- Scripts de respaldo/restauración de PostgreSQL con `pg_dump` y `pg_restore`
 
 ## 📦 Cómo levantar el proyecto
 
@@ -79,6 +80,12 @@ docker exec -it gamestore_db psql -U proy3 -d gamestore
 
 # Aplicar un script SQL manualmente
 docker exec -i gamestore_db psql -U proy3 -d gamestore < database/sql/04-views.sql
+
+# Crear respaldo local de la base de datos
+./scripts/db-backup.sh
+
+# Restaurar un respaldo local
+./scripts/db-restore.sh database/backups/gamestore_YYYYMMDD_HHMMSS.dump
 ```
 
 ## 🖥️ Frontend (React)
@@ -137,7 +144,9 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 │   ├── api.php                 # 15 endpoints REST
 │   └── web.php                 # Solo / informativo (la app es API-only)
 ├── database/sql/               # 10 scripts cargados por Postgres al init
+├── database/backups/           # Respaldos locales ignorados por Git
 ├── docker/start.sh             # Entrypoint del contenedor api
+├── scripts/                    # Utilidades de respaldo/restauración
 ├── web/                        # ── Frontend React + Vite ──
 │   ├── Dockerfile
 │   ├── package.json
@@ -373,6 +382,32 @@ Devuelve cantidades al inventario del local correspondiente y borra la compra. L
 ### 🔔 Trigger `audit_precio_producto`
 
 Sobre `PRODUCTO`. Cualquier `UPDATE` que cambie `Precio_Actual` se registra automáticamente en `LOG_PRECIOS_PRODUCTO` con valor anterior, nuevo y timestamp.
+
+## 💾 Backup y restauración
+
+La fase de respaldo usa herramientas nativas de PostgreSQL dentro del contenedor `gamestore_db`.
+
+### Crear respaldo
+
+```bash
+./scripts/db-backup.sh
+```
+
+El archivo se guarda en `database/backups/` con formato:
+
+```text
+gamestore_YYYYMMDD_HHMMSS.dump
+```
+
+La carpeta conserva solo `.gitignore` y `.gitkeep`; los respaldos reales quedan ignorados por Git para no subir archivos pesados o datos locales.
+
+### Restaurar respaldo
+
+```bash
+./scripts/db-restore.sh database/backups/gamestore_YYYYMMDD_HHMMSS.dump
+```
+
+> ⚠️ El respaldo se genera con `--clean --if-exists`, así que al restaurar reemplaza los objetos existentes de la base.
 
 ## 🛠️ Troubleshooting
 

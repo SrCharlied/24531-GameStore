@@ -1,0 +1,4 @@
+# Respaldos locales de PostgreSQL
+*.dump
+*.sql
+!.gitkeep
