@@ -12,9 +12,44 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $productos = DB::select('SELECT * FROM vw_producto_stock');
+        $sql = 'SELECT * FROM vw_producto_stock WHERE 1 = 1';
+        $params = [];
+
+        if ($request->filled('q')) {
+            $term = '%' . trim($request->query('q')) . '%';
+            $sql .= ' AND (nombre ILIKE ? OR franquicia ILIKE ? OR categoria ILIKE ?)';
+            array_push($params, $term, $term, $term);
+        }
+
+        if ($request->filled('franquicia')) {
+            $sql .= ' AND id_franquicia = ?';
+            $params[] = (int) $request->query('franquicia');
+        }
+
+        if ($request->filled('categoria')) {
+            $sql .= ' AND EXISTS (
+                SELECT 1
+                FROM producto_categoria pc
+                WHERE pc.id_producto = vw_producto_stock.id_producto
+                  AND pc.id_categoria = ?
+            )';
+            $params[] = (int) $request->query('categoria');
+        }
+
+        if ($request->filled('stock')) {
+            $sql .= match ($request->query('stock')) {
+                'sin_stock' => ' AND stock_total = 0',
+                'bajo' => ' AND stock_total BETWEEN 1 AND 10',
+                'disponible' => ' AND stock_total > 10',
+                default => '',
+            };
+        }
+
+        $sql .= ' ORDER BY id_producto';
+
+        $productos = DB::select($sql, $params);
         return response()->json(['productos' => $productos]);
     }
 

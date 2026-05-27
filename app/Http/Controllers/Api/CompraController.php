@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\Validator;
 
 class CompraController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $compras = DB::select('SELECT * FROM vw_compra_total');
+        [$where, $params] = $this->buildCompraFilters($request);
+        $compras = DB::select(
+            "SELECT * FROM vw_compra_total {$where} ORDER BY fecha_compra DESC, id_compra DESC",
+            $params
+        );
         return response()->json(['compras' => $compras]);
     }
 
@@ -86,10 +90,11 @@ class CompraController extends Controller
         }
     }
 
-    public function export()
+    public function export(Request $request)
     {
+        [$where, $params] = $this->buildCompraFilters($request, 'c');
         $rows = DB::select(
-            'SELECT
+            "SELECT
                 c.ID_Compra, c.Fecha_Compra, cl.Nombre_Cliente, e.Nombre_Empleado,
                 l.Nombre AS local_nombre, mp.Nombre AS metodo_pago,
                 p.Nombre AS producto, cp.Cantidad, cp.Precio_Venta,
@@ -101,7 +106,9 @@ class CompraController extends Controller
             INNER JOIN METODO_PAGO mp ON mp.ID_Metodo = c.ID_Metodo
             INNER JOIN COMPRA_PRODUCTOS cp ON cp.ID_Compra = c.ID_Compra
             INNER JOIN PRODUCTO p ON p.ID_Producto = cp.ID_Producto
-            ORDER BY c.Fecha_Compra DESC, c.ID_Compra DESC, p.Nombre'
+            {$where}
+            ORDER BY c.Fecha_Compra DESC, c.ID_Compra DESC, p.Nombre",
+            $params
         );
 
         $filename = 'compras_' . now()->format('Y-m-d_His') . '.csv';
@@ -122,5 +129,39 @@ class CompraController extends Controller
             }
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function buildCompraFilters(Request $request, ?string $tableAlias = null): array
+    {
+        $prefix = $tableAlias ? $tableAlias . '.' : '';
+        $where = [];
+        $params = [];
+
+        if ($request->filled('q')) {
+            $term = '%' . trim($request->query('q')) . '%';
+            if ($tableAlias) {
+                $where[] = '(cl.Nombre_Cliente ILIKE ? OR e.Nombre_Empleado ILIKE ? OR l.Nombre ILIKE ?)';
+            } else {
+                $where[] = '(nombre_cliente ILIKE ? OR nombre_empleado ILIKE ? OR local_nombre ILIKE ?)';
+            }
+            array_push($params, $term, $term, $term);
+        }
+
+        if ($request->filled('local')) {
+            $where[] = $prefix . 'id_local = ?';
+            $params[] = (int) $request->query('local');
+        }
+
+        if ($request->filled('desde')) {
+            $where[] = $prefix . 'fecha_compra::date >= ?';
+            $params[] = $request->query('desde');
+        }
+
+        if ($request->filled('hasta')) {
+            $where[] = $prefix . 'fecha_compra::date <= ?';
+            $params[] = $request->query('hasta');
+        }
+
+        return [count($where) ? 'WHERE ' . implode(' AND ', $where) : '', $params];
     }
 }

@@ -1,23 +1,41 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/useAuth';
 import { can } from '../utils/permissions';
 
+const initialFilters = {
+  q: '',
+  local: '',
+  desde: '',
+  hasta: '',
+};
+
 export default function ComprasListPage() {
   const { user } = useAuth();
   const [compras, setCompras] = useState([]);
+  const [locales, setLocales] = useState([]);
+  const [filters, setFilters] = useState(initialFilters);
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
   const canWriteCompras = can(user?.rol, 'comprasWrite');
 
+  const params = useMemo(() => activeParams(filters), [filters]);
+
   const load = useCallback(() => {
-    api.get('/api/compras')
+    setError(null);
+    api.get('/api/compras', { params })
       .then((res) => setCompras(res.data.compras))
       .catch(() => setError('No fue posible cargar el historial de compras.'));
-  }, []);
+  }, [params]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    api.get('/api/catalogos')
+      .then((res) => setLocales(res.data.locales || []))
+      .catch(() => setLocales([]));
+  }, []);
 
   async function handleAnular(id) {
     if (!confirm(`¿Anular la compra #${id}? Se devolverá el inventario.`)) return;
@@ -30,14 +48,23 @@ export default function ComprasListPage() {
     }
   }
 
-  const csvUrl = `${api.defaults.baseURL}/api/compras/export.csv`;
+  function updateFilter(name, value) {
+    setFilters((current) => ({ ...current, [name]: value }));
+  }
+
+  function clearFilters() {
+    setFilters(initialFilters);
+  }
+
+  const csvQuery = new URLSearchParams(params).toString();
+  const csvUrl = `${api.defaults.baseURL}/api/compras/export.csv${csvQuery ? `?${csvQuery}` : ''}`;
 
   return (
     <section className="panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ marginBottom: 4 }}>Compras</h2>
-          <p className="lead">Historial real calculado desde PostgreSQL.</p>
+          <p className="lead">Historial real calculado desde PostgreSQL con filtros exportables.</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href={csvUrl} className="btn">Exportar CSV</a>
@@ -46,6 +73,50 @@ export default function ComprasListPage() {
           )}
         </div>
       </div>
+
+      <div className="grid cols-4" style={{ marginTop: 16 }}>
+        <div className="form-field">
+          <label htmlFor="compra-q">Buscar</label>
+          <input
+            id="compra-q"
+            placeholder="Cliente, empleado o local"
+            value={filters.q}
+            onChange={(e) => updateFilter('q', e.target.value)}
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="compra-local">Local</label>
+          <select
+            id="compra-local"
+            value={filters.local}
+            onChange={(e) => updateFilter('local', e.target.value)}
+          >
+            <option value="">Todos</option>
+            {locales.map((l) => (
+              <option key={l.id_local} value={String(l.id_local)}>{l.nombre}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field">
+          <label htmlFor="compra-desde">Desde</label>
+          <input
+            id="compra-desde"
+            type="date"
+            value={filters.desde}
+            onChange={(e) => updateFilter('desde', e.target.value)}
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="compra-hasta">Hasta</label>
+          <input
+            id="compra-hasta"
+            type="date"
+            value={filters.hasta}
+            onChange={(e) => updateFilter('hasta', e.target.value)}
+          />
+        </div>
+      </div>
+      <button type="button" className="btn btn-sm" onClick={clearFilters}>Limpiar filtros</button>
 
       {error && <div className="alert" style={{ marginTop: 12 }}>{error}</div>}
       {flash && (
@@ -68,7 +139,7 @@ export default function ComprasListPage() {
         </thead>
         <tbody>
           {compras.length === 0 ? (
-            <tr><td colSpan="7">No hay compras para mostrar.</td></tr>
+            <tr><td colSpan="7">No hay compras para mostrar con esos filtros.</td></tr>
           ) : compras.map((c) => (
             <tr key={c.id_compra}>
               <td>#{c.id_compra}</td>
@@ -91,5 +162,11 @@ export default function ComprasListPage() {
         </tbody>
       </table>
     </section>
+  );
+}
+
+function activeParams(filters) {
+  return Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => value !== '' && value !== null && value !== undefined)
   );
 }

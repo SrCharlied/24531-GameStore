@@ -239,10 +239,10 @@ Todos los endpoints `/api/*` devuelven JSON. El header `Accept: application/json
 
 | Método | Endpoint | Roles | Descripción |
 |---|---|---|---|
-| `GET` | `/api/compras` | admin, gerente, vendedor, auditor | Listado con totales calculados (consume `vw_compra_total`) |
+| `GET` | `/api/compras` | admin, gerente, vendedor, auditor | Listado con totales calculados (consume `vw_compra_total`) y filtros `q`, `local`, `desde`, `hasta` |
 | `POST` | `/api/compras` | admin, vendedor | Registra compra dentro de transacción. Llama `registrar_compra()` |
 | `DELETE` | `/api/compras/{id}` | admin, vendedor | Anula compra. Llama `anular_compra()`, devuelve inventario |
-| `GET` | `/api/compras/export.csv` | admin, gerente, vendedor, auditor | Exporta líneas de compra en CSV (UTF-8 con BOM) |
+| `GET` | `/api/compras/export.csv` | admin, gerente, vendedor, auditor | Exporta líneas de compra en CSV (UTF-8 con BOM), respetando los mismos filtros del listado |
 
 Body de `POST /api/compras`:
 ```json
@@ -267,7 +267,7 @@ Respuestas:
 
 | Método | Endpoint | Roles | Descripción |
 |---|---|---|---|
-| `GET` | `/api/productos` | admin, gerente, bodega, auditor | Listado con stock total agregado (consume `vw_producto_stock`) |
+| `GET` | `/api/productos` | admin, gerente, bodega, auditor | Listado con stock total agregado (consume `vw_producto_stock`) y filtros `q`, `franquicia`, `categoria`, `stock` |
 | `GET` | `/api/productos/{id}` | admin, gerente, bodega, auditor | Detalle + categorías + stock por local (para edit form) |
 | `POST` | `/api/productos` | admin, bodega | Crear producto con categorías y stock por local (UPSERT) |
 | `PUT` | `/api/productos/{id}` | admin, bodega | Actualizar |
