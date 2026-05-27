@@ -298,7 +298,7 @@ Body de `POST /api/productos`:
 
 ## 🗄️ Base de datos
 
-PostgreSQL carga 9 scripts al inicializar el volumen (`database/sql/`):
+PostgreSQL carga 10 scripts al inicializar el volumen (`database/sql/`):
 
 | Archivo | Contenido |
 |---|---|
@@ -306,19 +306,20 @@ PostgreSQL carga 9 scripts al inicializar el volumen (`database/sql/`):
 | `02-contenidos.sql` | Datos base de prueba |
 | `03-indexes.sql` | 7 índices sobre FKs y columnas frecuentes |
 | `04-views.sql` | `vw_producto_stock`, `vw_compra_total` |
-| `05-functions.sql` | `registrar_compra()` (PL/pgSQL transaccional) |
+| `05-functions.sql` | `registrar_compra()` + procedure `sp_registrar_compra()` |
 | `06-audit-trigger.sql` | Tabla `LOG_PRECIOS_PRODUCTO` y trigger `audit_precio_producto` |
-| `07-anular-compra.sql` | `anular_compra()` que reversa ventas |
-| `08-extra-data.sql` | Inventario completo + 40 compras adicionales en Ene-Abr 2026 |
+| `07-anular-compra.sql` | `anular_compra()` + procedure `sp_anular_compra()` |
+| `08-extra-data.sql` | Inventario completo + 40 compras determinísticas en Ene-Abr 2026 |
 | `09-usuarios.sql` | Tabla `USUARIO`, cinco roles de aplicación y usuarios de prueba con `pgcrypto` para bcrypt |
+| `10-permisos.sql` | Roles de base de datos y permisos granulares por perfil |
 
 ### 📊 Volumen actual
 
 | Tabla | Filas |
 |---|---|
 | 7 maestros (Franquicia, Categoría, Cliente, Empleado, Local, etc.) | 25 c/u |
-| Producto | 26 |
-| Inventario | 650 |
+| Producto | 25 |
+| Inventario | 625 |
 | Compra | 65 |
 | Compra_Productos | 145 |
 | Usuario | 5 |
@@ -404,7 +405,7 @@ Universidad — Quinto Semestre — Base de Datos / Programación Web
 ## 📝 Credenciales fijas (rúbrica)
 
 ```env
-DB_USERNAME=proy2
+DB_USERNAME=proy3
 DB_PASSWORD=secret
 DB_DATABASE=gamestore
 ```
