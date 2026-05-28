@@ -20,6 +20,51 @@ class CompraController extends Controller
         return response()->json(['compras' => $compras]);
     }
 
+    public function show($id)
+    {
+        $compra = DB::selectOne(
+            'SELECT
+                c.ID_Compra, c.Fecha_Compra,
+                cl.ID_Cliente, cl.Nombre_Cliente,
+                e.ID_Empleado, e.Nombre_Empleado,
+                l.ID_Local, l.Nombre AS local_nombre,
+                mp.ID_Metodo, mp.Nombre AS metodo_pago,
+                SUM(cp.Cantidad * cp.Precio_Venta) AS total_compra
+             FROM COMPRA c
+             INNER JOIN CLIENTE cl ON cl.ID_Cliente = c.ID_Cliente
+             INNER JOIN EMPLEADO e ON e.ID_Empleado = c.ID_Empleado
+             INNER JOIN LOCAL l ON l.ID_Local = c.ID_Local
+             INNER JOIN METODO_PAGO mp ON mp.ID_Metodo = c.ID_Metodo
+             INNER JOIN COMPRA_PRODUCTOS cp ON cp.ID_Compra = c.ID_Compra
+             WHERE c.ID_Compra = ?
+             GROUP BY c.ID_Compra, cl.ID_Cliente, cl.Nombre_Cliente,
+                      e.ID_Empleado, e.Nombre_Empleado,
+                      l.ID_Local, l.Nombre, mp.ID_Metodo, mp.Nombre',
+            [$id]
+        );
+
+        if (!$compra) {
+            return response()->json(['message' => 'Compra no encontrada.'], 404);
+        }
+
+        $lineas = DB::select(
+            'SELECT
+                p.ID_Producto, p.Nombre AS producto,
+                cp.Cantidad, cp.Precio_Venta,
+                (cp.Cantidad * cp.Precio_Venta) AS subtotal
+             FROM COMPRA_PRODUCTOS cp
+             INNER JOIN PRODUCTO p ON p.ID_Producto = cp.ID_Producto
+             WHERE cp.ID_Compra = ?
+             ORDER BY p.Nombre',
+            [$id]
+        );
+
+        return response()->json([
+            'compra' => $compra,
+            'lineas' => $lineas,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

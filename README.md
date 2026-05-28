@@ -105,7 +105,8 @@ La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el na
 | `/productos` | admin, gerente, bodega, auditor | `ProductosListPage` |
 | `/productos/nuevo` | admin, bodega | `ProductoFormPage` |
 | `/productos/:id/editar` | admin, bodega | `ProductoFormPage` |
-| `/compras` | admin, gerente, vendedor, auditor | `ComprasListPage` (con botón Exportar CSV) |
+| `/compras` | admin, gerente, vendedor, auditor | `ComprasListPage` (con botón Exportar CSV y acceso a detalle) |
+| `/compras/:id` | admin, gerente, vendedor, auditor | `CompraDetallePage` (cabecera + líneas de productos) |
 | `/compras/nueva` | admin, vendedor | `CompraNuevaPage` (**carrito con `useReducer`**) |
 | `/reportes` | admin, gerente, auditor | `ReportesPage` (filtros por local y fechas) |
 | `/auditoria/precios` | admin, auditor | `AuditoriaPreciosPage` |
@@ -244,6 +245,7 @@ Todos los endpoints `/api/*` devuelven JSON. El header `Accept: application/json
 | Método | Endpoint | Roles | Descripción |
 |---|---|---|---|
 | `GET` | `/api/compras` | admin, gerente, vendedor, auditor | Listado con totales calculados (consume `vw_compra_total`) y filtros `q`, `local`, `desde`, `hasta` |
+| `GET` | `/api/compras/{id}` | admin, gerente, vendedor, auditor | Detalle de compra con cabecera, método de pago, líneas, subtotales y total |
 | `POST` | `/api/compras` | admin, vendedor | Registra compra dentro de transacción. Llama `registrar_compra()` |
 | `DELETE` | `/api/compras/{id}` | admin, vendedor | Anula compra. Llama `anular_compra()`, devuelve inventario |
 | `GET` | `/api/compras/export.csv` | admin, gerente, vendedor, auditor | Exporta líneas de compra en CSV (UTF-8 con BOM), respetando los mismos filtros del listado |

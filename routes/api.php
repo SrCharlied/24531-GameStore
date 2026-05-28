@@ -24,6 +24,7 @@ Route::middleware('auth.session')->group(function () {
 Route::middleware('auth.session:admin,gerente,vendedor,auditor')->group(function () {
     Route::get('/compras',             [CompraController::class, 'index']);
     Route::get('/compras/export.csv',  [CompraController::class, 'export']);
+    Route::get('/compras/{id}',        [CompraController::class, 'show']);
 });
 
 Route::middleware('auth.session:admin,vendedor')->group(function () {

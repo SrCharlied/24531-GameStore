@@ -149,13 +149,16 @@ export default function ComprasListPage() {
               <td>{new Date(c.fecha_compra).toLocaleString()}</td>
               <td>${Number(c.total_compra).toFixed(2)}</td>
               <td>
-                {canWriteCompras ? (
-                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleAnular(c.id_compra)}>
-                    Anular
-                  </button>
-                ) : (
-                  <span className="tag">Solo lectura</span>
-                )}
+                <div className="row-actions">
+                  <Link to={`/compras/${c.id_compra}`} className="btn btn-sm">Ver detalle</Link>
+                  {canWriteCompras ? (
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => handleAnular(c.id_compra)}>
+                      Anular
+                    </button>
+                  ) : (
+                    <span className="tag">Solo lectura</span>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

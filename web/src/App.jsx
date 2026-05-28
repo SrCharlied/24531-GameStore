@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProductosListPage from './pages/ProductosListPage';
 import ProductoFormPage from './pages/ProductoFormPage';
 import ComprasListPage from './pages/ComprasListPage';
+import CompraDetallePage from './pages/CompraDetallePage';
 import CompraNuevaPage from './pages/CompraNuevaPage';
 import ReportesPage from './pages/ReportesPage';
 import AuditoriaPreciosPage from './pages/AuditoriaPreciosPage';
@@ -23,6 +24,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route element={<RequireAuth roles={rolesFor('comprasRead')} fallback="/productos" />}>
                 <Route path="/compras" element={<ComprasListPage />} />
+                <Route path="/compras/:id" element={<CompraDetallePage />} />
               </Route>
 
               <Route element={<RequireAuth roles={rolesFor('comprasWrite')} fallback="/compras" />}>
