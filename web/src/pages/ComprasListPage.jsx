@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/useAuth';
 import { can } from '../utils/permissions';
+import { validateDateRange } from '../utils/validation';
 
 const initialFilters = {
   q: '',
@@ -13,23 +14,33 @@ const initialFilters = {
 
 export default function ComprasListPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [compras, setCompras] = useState([]);
   const [locales, setLocales] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
   const [error, setError] = useState(null);
-  const [flash, setFlash] = useState(null);
+  const [flash, setFlash] = useState(location.state?.flash || null);
+  const [anulandoId, setAnulandoId] = useState(null);
   const canWriteCompras = can(user?.rol, 'comprasWrite');
 
+  const dateError = validateDateRange(filters);
   const params = useMemo(() => activeParams(filters), [filters]);
 
   const load = useCallback(() => {
+    if (dateError) return;
     setError(null);
     api.get('/api/compras', { params })
       .then((res) => setCompras(res.data.compras))
       .catch(() => setError('No fue posible cargar el historial de compras.'));
-  }, [params]);
+  }, [dateError, params]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!location.state?.flash) return;
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state?.flash, navigate]);
 
   useEffect(() => {
     api.get('/api/catalogos')
@@ -38,13 +49,17 @@ export default function ComprasListPage() {
   }, []);
 
   async function handleAnular(id) {
-    if (!confirm(`¿Anular la compra #${id}? Se devolverá el inventario.`)) return;
+    if (!confirm(`¿Anular la compra #${id}? Se devolverá el inventario y se eliminará el registro de venta.`)) return;
+    setAnulandoId(id);
+    setFlash(null);
     try {
       await api.delete(`/api/compras/${id}`);
       setFlash({ type: 'success', text: `Compra #${id} anulada.` });
       load();
     } catch (e) {
       setFlash({ type: 'error', text: e.response?.data?.message || 'Error al anular.' });
+    } finally {
+      setAnulandoId(null);
     }
   }
 
@@ -118,6 +133,7 @@ export default function ComprasListPage() {
       </div>
       <button type="button" className="btn btn-sm" onClick={clearFilters}>Limpiar filtros</button>
 
+      {dateError && <div className="alert" style={{ marginTop: 12 }}>{dateError}</div>}
       {error && <div className="alert" style={{ marginTop: 12 }}>{error}</div>}
       {flash && (
         <div className={flash.type === 'success' ? 'alert alert-success' : 'alert'} style={{ marginTop: 12 }}>
@@ -152,8 +168,13 @@ export default function ComprasListPage() {
                 <div className="row-actions">
                   <Link to={`/compras/${c.id_compra}`} className="btn btn-sm">Ver detalle</Link>
                   {canWriteCompras ? (
-                    <button type="button" className="btn btn-sm btn-danger" onClick={() => handleAnular(c.id_compra)}>
-                      Anular
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      disabled={anulandoId === c.id_compra}
+                      onClick={() => handleAnular(c.id_compra)}
+                    >
+                      {anulandoId === c.id_compra ? 'Anulando…' : 'Anular'}
                     </button>
                   ) : (
                     <span className="tag">Solo lectura</span>

@@ -138,12 +138,14 @@ export default function CompraNuevaPage() {
               onSelectProducto={handleSelectProducto}
               onChange={updateLine}
               onRemove={removeLine}
+              disabled={submitting}
             />
           ))}
           <button
             type="button"
             className="btn btn-sm"
             style={{ marginTop: 8 }}
+            disabled={submitting}
             onClick={() => dispatch({ type: 'ADD_LINE' })}
           >
             + Agregar línea
@@ -160,7 +162,7 @@ export default function CompraNuevaPage() {
           <button type="submit" className="btn btn-primary" disabled={submitting}>
             {submitting ? 'Registrando…' : 'Registrar compra'}
           </button>
-          <button type="button" className="btn" onClick={() => navigate('/compras')}>
+          <button type="button" className="btn" onClick={() => navigate('/compras')} disabled={submitting}>
             Cancelar
           </button>
         </div>
@@ -184,12 +186,12 @@ function Select({ id, label, value, onChange, options, error }) {
   );
 }
 
-function CompraLine({ line, productos, onSelectProducto, onChange, onRemove }) {
+function CompraLine({ line, productos, onSelectProducto, onChange, onRemove, disabled = false }) {
   return (
     <div className="compra-line">
       <div className="form-field">
         <label>Producto</label>
-        <select value={line.producto_id} onChange={(e) => onSelectProducto(line.id, e.target.value)}>
+        <select value={line.producto_id} disabled={disabled} onChange={(e) => onSelectProducto(line.id, e.target.value)}>
           <option value="">Seleccione un producto</option>
           {productos.map((p) => (
             <option key={p.id_producto} value={String(p.id_producto)}>{p.nombre}</option>
@@ -199,7 +201,8 @@ function CompraLine({ line, productos, onSelectProducto, onChange, onRemove }) {
       <div className="form-field">
         <label>Cantidad</label>
         <input
-          type="number" min="1"
+          type="number" min="1" step="1"
+          disabled={disabled}
           value={line.cantidad}
           onChange={(e) => onChange(line.id, { cantidad: e.target.value })}
         />
@@ -208,11 +211,12 @@ function CompraLine({ line, productos, onSelectProducto, onChange, onRemove }) {
         <label>Precio</label>
         <input
           type="number" step="0.01" min="0.01"
+          disabled={disabled}
           value={line.precio}
           onChange={(e) => onChange(line.id, { precio: e.target.value })}
         />
       </div>
-      <button type="button" className="btn btn-sm btn-danger" onClick={() => onRemove(line.id)} title="Quitar">
+      <button type="button" className="btn btn-sm btn-danger" disabled={disabled} onClick={() => onRemove(line.id)} title="Quitar">
         ×
       </button>
     </div>

@@ -36,10 +36,19 @@ export function validateCompra(form) {
     if (!l.producto_id) return true;
     const c = Number(l.cantidad);
     const p = Number(l.precio);
-    return Number.isNaN(c) || c < 1 || Number.isNaN(p) || p < 0.01;
+    return Number.isNaN(c) || c < 1 || !Number.isInteger(c) || Number.isNaN(p) || p < 0.01;
   });
   if (lineasInvalidas) {
-    errors.lineas = 'Cada línea debe tener producto, cantidad ≥ 1 y precio > 0.';
+    errors.lineas = 'Cada línea debe tener producto, cantidad entera ≥ 1 y precio > 0.';
+  }
+  const productoIds = form.lineas.map((l) => l.producto_id).filter(Boolean);
+  if (new Set(productoIds).size !== productoIds.length) {
+    errors.lineas = 'No repitas productos: ajusta la cantidad en una sola línea.';
   }
   return errors;
+}
+
+export function validateDateRange(filters) {
+  if (!filters?.desde || !filters?.hasta) return null;
+  return filters.desde > filters.hasta ? 'La fecha desde no puede ser posterior a la fecha hasta.' : null;
 }

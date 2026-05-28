@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateCompra, validateProducto } from '../utils/validation';
+import { validateCompra, validateDateRange, validateProducto } from '../utils/validation';
 
 describe('validateProducto', () => {
   const valido = {
@@ -48,5 +48,27 @@ describe('validateCompra', () => {
       lineas: [{ id: 'a', producto_id: '', cantidad: 0, precio: '10' }],
     });
     expect(errors.lineas).toBeTruthy();
+  });
+
+  it('rechaza productos duplicados en el carrito', () => {
+    const errors = validateCompra({
+      ...baseCompra,
+      lineas: [
+        { id: 'a', producto_id: '5', cantidad: 1, precio: '10' },
+        { id: 'b', producto_id: '5', cantidad: 2, precio: '10' },
+      ],
+    });
+    expect(errors.lineas).toMatch(/No repitas productos/);
+  });
+});
+
+describe('validateDateRange', () => {
+  it('permite rangos vacíos o cronológicos', () => {
+    expect(validateDateRange({ desde: '', hasta: '2026-05-01' })).toBeNull();
+    expect(validateDateRange({ desde: '2026-05-01', hasta: '2026-05-02' })).toBeNull();
+  });
+
+  it('rechaza rangos invertidos', () => {
+    expect(validateDateRange({ desde: '2026-05-03', hasta: '2026-05-02' })).toMatch(/posterior/);
   });
 });

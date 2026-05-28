@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import { validateDateRange } from '../utils/validation';
 
 const initialFilters = {
   q: '',
@@ -12,14 +13,16 @@ export default function AuditoriaPreciosPage() {
   const [filters, setFilters] = useState(initialFilters);
   const [error, setError] = useState(null);
 
+  const dateError = validateDateRange(filters);
   const params = useMemo(() => activeParams(filters), [filters]);
 
   const load = useCallback(() => {
+    if (dateError) return;
     setError(null);
     api.get('/api/auditoria/precios', { params })
       .then((res) => setLogs(res.data.logs))
       .catch(() => setError('No fue posible cargar la auditoría de precios.'));
-  }, [params]);
+  }, [dateError, params]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -71,6 +74,7 @@ export default function AuditoriaPreciosPage() {
       </div>
       <button type="button" className="btn btn-sm" onClick={clearFilters}>Limpiar filtros</button>
 
+      {dateError && <div className="alert" style={{ marginTop: 12 }}>{dateError}</div>}
       {error && <div className="alert" style={{ marginTop: 12 }}>{error}</div>}
 
       <table>

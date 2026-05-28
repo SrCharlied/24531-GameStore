@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import { validateDateRange } from '../utils/validation';
 
 const initialFilters = {
   local: '',
@@ -13,14 +14,16 @@ export default function ReportesPage() {
   const [filters, setFilters] = useState(initialFilters);
   const [error, setError] = useState(null);
 
+  const dateError = validateDateRange(filters);
   const params = useMemo(() => activeParams(filters), [filters]);
 
   const load = useCallback(() => {
+    if (dateError) return;
     setError(null);
     api.get('/api/reportes', { params })
       .then((res) => setData(res.data))
       .catch(() => setError('No fue posible cargar los reportes.'));
-  }, [params]);
+  }, [dateError, params]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -53,7 +56,11 @@ export default function ReportesPage() {
             <p className="lead">Indicadores comerciales filtrables por local y rango de fechas.</p>
           </div>
           <div className="row-actions">
-            <a href={csvUrl} className="btn btn-sm">Exportar CSV</a>
+            {dateError ? (
+              <button type="button" className="btn btn-sm" disabled>Exportar CSV</button>
+            ) : (
+              <a href={csvUrl} className="btn btn-sm">Exportar CSV</a>
+            )}
             <button type="button" className="btn btn-sm" onClick={clearFilters}>Limpiar filtros</button>
           </div>
         </div>
@@ -91,6 +98,7 @@ export default function ReportesPage() {
             />
           </div>
         </div>
+        {dateError && <div className="alert" style={{ marginTop: 12 }}>{dateError}</div>}
       </section>
 
       <section className="panel">
