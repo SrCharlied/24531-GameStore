@@ -23,6 +23,7 @@ https://gamestore.servigtdev.com
 - RBAC: cinco roles de negocio (`admin`, `gerente`, `vendedor`, `bodega`, `auditor`) con responsabilidades diferenciadas y rutas protegidas por rol en backend/frontend
 - Dashboard con alertas de inventario e ingresos del mes
 - Reportes comerciales filtrables por local y rango de fechas
+- Detalle completo de compras y export CSV de compras/reportes
 - Endpoint y pantalla de auditoría para revisar cambios de precio registrados por trigger
 - Manejo de errores con códigos HTTP correctos y mensajes JSON legibles
 
@@ -31,7 +32,8 @@ https://gamestore.servigtdev.com
 - Auth global con Context (`AuthProvider` + `useAuth`)
 - Carrito de líneas en "Nueva compra" con `useReducer` + `useMemo` + `useCallback`
 - Formularios controlados con validación cliente
-- 15 pruebas con Vitest (reducer, validación, permisos, componentes)
+- Validación de rangos de fecha y bloqueo de acciones durante operaciones críticas
+- 18 pruebas con Vitest (reducer, validación, permisos, componentes)
 - ESLint sin warnings
 
 **Infraestructura**
@@ -64,7 +66,7 @@ Los servicios quedan disponibles en:
 | API (Laravel) | `http://localhost:8000` | Solo JSON. Se accede a través del proxy del frontend. |
 | PostgreSQL | `localhost:5432` | `proy3` / `secret`, base `gamestore` |
 
-> 💡 Las credenciales fijas de la rúbrica del Proyecto 3 (`proy3` / `secret`) están definidas en `.env.example`. El archivo `.env` ya viene listo en el repositorio para que `docker compose up` funcione sin pasos previos.
+> 💡 Las credenciales fijas de la rúbrica del Proyecto 3 (`proy3` / `secret`) están definidas en `.env.example`. Si `.env` no existe, el contenedor API lo crea automáticamente al iniciar y genera `APP_KEY`.
 
 ### 💡 Comandos útiles
 
@@ -140,7 +142,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 ├── .env / .env.example         # Variables de entorno (incluye proy3/secret)
 ├── Dockerfile                  # Backend: PHP 8.3 + pdo_pgsql
 ├── README.md
-├── fases-v2.md                 # Plan de migración a React
+├── ENTREGA.md                  # Guía rápida de demo y checklist de rúbrica
 ├── app/
 │   ├── Http/Controllers/Api/   # Controllers JSON (Auth, Producto, Compra, Auditoria, ...)
 │   ├── Http/Controllers/Controller.php  # Base con humanizeDbError()
@@ -148,7 +150,7 @@ Todo el proyecto vive bajo `24531-GameStore/`:
 │   ├── Models/                 # Modelos Eloquent (User, Producto, Inventario, Compra, catálogos)
 │   └── Support/DatabaseRole.php # Mapea roles de app a roles reales del DBMS
 ├── routes/
-│   ├── api.php                 # 15 endpoints REST
+│   ├── api.php                 # 18 endpoints REST
 │   └── web.php                 # Solo / informativo (la app es API-only)
 ├── database/sql/               # 10 scripts cargados por Postgres al init
 ├── database/backups/           # Respaldos locales ignorados por Git
