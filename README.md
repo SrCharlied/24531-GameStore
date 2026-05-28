@@ -108,7 +108,7 @@ La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el na
 | `/compras` | admin, gerente, vendedor, auditor | `ComprasListPage` (con botón Exportar CSV y acceso a detalle) |
 | `/compras/:id` | admin, gerente, vendedor, auditor | `CompraDetallePage` (cabecera + líneas de productos) |
 | `/compras/nueva` | admin, vendedor | `CompraNuevaPage` (**carrito con `useReducer`**) |
-| `/reportes` | admin, gerente, auditor | `ReportesPage` (filtros por local y fechas) |
+| `/reportes` | admin, gerente, auditor | `ReportesPage` (filtros por local/fechas y export CSV) |
 | `/auditoria/precios` | admin, auditor | `AuditoriaPreciosPage` |
 
 ### Hooks y patrones
@@ -312,6 +312,7 @@ Los listados agregados siguen consumiendo vistas SQL (`vw_producto_stock`) porqu
 |---|---|---|---|
 | `GET` | `/api/dashboard` | admin, gerente, auditor | Métricas globales, ingresos del mes, conteo de stock crítico, alertas de inventario y últimas 5 compras |
 | `GET` | `/api/reportes` | admin, gerente, auditor | Top 5 locales por ingreso, top 5 productos, clientes destacados (con CTE + subqueries) y filtros `local`, `desde`, `hasta` |
+| `GET` | `/api/reportes/export.csv` | admin, gerente, auditor | Exporta las secciones del reporte en CSV, respetando filtros `local`, `desde`, `hasta` |
 
 ### Auditoría de precios (admin, auditor)
 

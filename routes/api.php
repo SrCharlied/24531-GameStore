@@ -34,8 +34,9 @@ Route::middleware('auth.session:admin,vendedor')->group(function () {
 
 // Reportes: roles con permiso de lectura global.
 Route::middleware('auth.session:admin,gerente,auditor')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::get('/reportes',  [ReporteController::class, 'index']);
+    Route::get('/dashboard',           [DashboardController::class, 'index']);
+    Route::get('/reportes',            [ReporteController::class, 'index']);
+    Route::get('/reportes/export.csv', [ReporteController::class, 'export']);
 });
 
 // Auditoría de cambios sensibles.

@@ -38,6 +38,9 @@ export default function ReportesPage() {
     setFilters(initialFilters);
   }
 
+  const csvQuery = new URLSearchParams(params).toString();
+  const csvUrl = `${api.defaults.baseURL}/api/reportes/export.csv${csvQuery ? `?${csvQuery}` : ''}`;
+
   if (error) return <div className="panel"><div className="alert">{error}</div></div>;
   if (!data) return <div className="loading">Cargando reportes…</div>;
 
@@ -49,7 +52,10 @@ export default function ReportesPage() {
             <h2 style={{ marginBottom: 4 }}>Reportes</h2>
             <p className="lead">Indicadores comerciales filtrables por local y rango de fechas.</p>
           </div>
-          <button type="button" className="btn btn-sm" onClick={clearFilters}>Limpiar filtros</button>
+          <div className="row-actions">
+            <a href={csvUrl} className="btn btn-sm">Exportar CSV</a>
+            <button type="button" className="btn btn-sm" onClick={clearFilters}>Limpiar filtros</button>
+          </div>
         </div>
 
         <div className="grid cols-3" style={{ marginTop: 16 }}>

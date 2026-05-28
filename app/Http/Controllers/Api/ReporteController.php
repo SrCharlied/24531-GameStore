@@ -10,6 +10,55 @@ class ReporteController extends Controller
 {
     public function index(Request $request)
     {
+        $data = $this->buildReportData($request);
+
+        return response()->json([
+            ...$data,
+            'filtros' => $request->only(['local', 'desde', 'hasta']),
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $data = $this->buildReportData($request);
+        $filename = 'reportes_' . now()->format('Y-m-d_His') . '.csv';
+
+        return response()->streamDownload(function () use ($data, $request) {
+            echo "\xEF\xBB\xBF";
+            $out = fopen('php://output', 'w');
+
+            fputcsv($out, ['Filtros aplicados']);
+            fputcsv($out, ['Local', $request->query('local', 'Todos')]);
+            fputcsv($out, ['Desde', $request->query('desde', 'Sin inicio')]);
+            fputcsv($out, ['Hasta', $request->query('hasta', 'Sin fin')]);
+            fputcsv($out, []);
+
+            fputcsv($out, ['Top 5 locales por ingreso']);
+            fputcsv($out, ['Local', 'Compras', 'Ingreso total']);
+            foreach ($data['ventas_por_local'] as $row) {
+                fputcsv($out, [$row->local_nombre, $row->total_compras, $row->ingreso_total]);
+            }
+            fputcsv($out, []);
+
+            fputcsv($out, ['Top 5 productos mas vendidos']);
+            fputcsv($out, ['Producto', 'Unidades vendidas', 'Ingreso generado']);
+            foreach ($data['top_productos'] as $row) {
+                fputcsv($out, [$row->nombre, $row->unidades_vendidas, $row->ingreso_generado]);
+            }
+            fputcsv($out, []);
+
+            fputcsv($out, ['Clientes destacados']);
+            fputcsv($out, ['Cliente', 'Compras', 'Total gastado']);
+            foreach ($data['clientes_destacados'] as $row) {
+                fputcsv($out, [$row->nombre_cliente, $row->total_compras, $row->total_gastado]);
+            }
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function buildReportData(Request $request): array
+    {
         [$where, $params] = $this->buildCompraFilters($request, 'c');
 
         $ventasPorLocal = DB::select(
@@ -67,12 +116,11 @@ class ReporteController extends Controller
             [...$params, ...$params]
         );
 
-        return response()->json([
+        return [
             'ventas_por_local'    => $ventasPorLocal,
             'top_productos'       => $topProductos,
             'clientes_destacados' => $clientesDestacados,
-            'filtros'             => $request->only(['local', 'desde', 'hasta']),
-        ]);
+        ];
     }
 
     private function buildCompraFilters(Request $request, ?string $tableAlias = null): array
