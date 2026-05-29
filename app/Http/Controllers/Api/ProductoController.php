@@ -179,6 +179,73 @@ class ProductoController extends Controller
         }
     }
 
+    /**
+     * PATCH /api/productos/{id}/precio
+     *
+     * Actualiza únicamente el precio invocando el stored procedure
+     * sp_actualizar_precio (IN/OUT + EXCEPTION). El trigger
+     * audit_precio_producto registra el cambio en LOG_PRECIOS_PRODUCTO.
+     */
+    public function actualizarPrecio(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'precio_actual' => 'required|numeric|min:0.01',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
+
+            $row = DB::selectOne(
+                'CALL sp_actualizar_precio(?, ?, NULL)',
+                [(int) $id, $request->input('precio_actual')]
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'message'         => "Precio del producto #{$id} actualizado.",
+                'precio_anterior' => $row->p_precio_anterior ?? null,
+                'precio_nuevo'    => (float) $request->input('precio_actual'),
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => $this->humanizeDbError($e)], 422);
+        }
+    }
+
+    /**
+     * POST /api/productos/{id}/descontinuar
+     *
+     * Llama sp_descontinuar_producto: pone el inventario a 0 en todos los
+     * locales y devuelve cuántas unidades fueron retiradas.
+     */
+    public function descontinuar(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            DatabaseRole::applyForUser($request->user());
+
+            $row = DB::selectOne(
+                'CALL sp_descontinuar_producto(?, NULL)',
+                [(int) $id]
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'message'            => "Producto #{$id} descontinuado.",
+                'unidades_retiradas' => $row->p_unidades_retiradas ?? 0,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => $this->humanizeDbError($e)], 422);
+        }
+    }
+
     private function makeValidator(Request $request)
     {
         return Validator::make($request->all(), [

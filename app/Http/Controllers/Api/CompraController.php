@@ -95,8 +95,11 @@ class CompraController extends Controller
             DB::beginTransaction();
             DatabaseRole::applyForUser($request->user());
 
+            // Invocación del stored procedure sp_registrar_compra.
+            // El último argumento (NULL) corresponde al parámetro OUT p_id_compra,
+            // que Postgres devuelve como resultado del CALL.
             $row = DB::selectOne(
-                'SELECT registrar_compra(?, ?, ?, ?, ?, ?, ?) AS id_compra',
+                'CALL sp_registrar_compra(?, ?, ?, ?, ?::INT[], ?::INT[], ?::NUMERIC[], NULL)',
                 [
                     $request->input('cliente'),
                     $request->input('empleado'),
@@ -107,6 +110,8 @@ class CompraController extends Controller
                     '{' . implode(',', $precios)    . '}',
                 ]
             );
+            // El SP devuelve la columna `p_id_compra` con el OUT.
+            $row = (object) ['id_compra' => $row->p_id_compra ?? $row->id_compra ?? null];
 
             DB::commit();
 
@@ -125,7 +130,8 @@ class CompraController extends Controller
         try {
             DB::beginTransaction();
             DatabaseRole::applyForUser($request->user());
-            DB::statement('SELECT anular_compra(?)', [$id]);
+            // Invocación del stored procedure sp_anular_compra (no tiene OUT).
+            DB::statement('CALL sp_anular_compra(?)', [$id]);
             DB::commit();
 
             return response()->json(['message' => "Compra #{$id} anulada exitosamente."]);

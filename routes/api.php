@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\CompraController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\InventarioController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\ReporteController;
 use Illuminate\Support\Facades\Route;
@@ -54,4 +55,9 @@ Route::middleware('auth.session:admin,bodega')->group(function () {
     Route::post('/productos',          [ProductoController::class, 'store']);
     Route::put('/productos/{id}',      [ProductoController::class, 'update']);
     Route::delete('/productos/{id}',   [ProductoController::class, 'destroy']);
+
+    // Operaciones via stored procedures
+    Route::patch('/productos/{id}/precio',         [ProductoController::class, 'actualizarPrecio']);
+    Route::post('/productos/{id}/descontinuar',    [ProductoController::class, 'descontinuar']);
+    Route::post('/inventario/reabastecer',         [InventarioController::class, 'reabastecer']);
 });
