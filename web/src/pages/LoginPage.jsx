@@ -79,13 +79,16 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <p className="lead" style={{ marginTop: 16, fontSize: '0.85rem' }}>
+        <div className="lead" style={{ marginTop: 16, fontSize: '0.85rem' }}>
           <strong>Usuarios de prueba:</strong>
-          <br />
-          <code>admin / admin123</code> — acceso completo
-          <br />
-          <code>empleado / empleado123</code> — solo compras
-        </p>
+          <ul style={{ margin: '8px 0 0', paddingLeft: 18, lineHeight: 1.7 }}>
+            <li><code>admin / admin123</code> — acceso completo</li>
+            <li><code>gerente / gerente123</code> — dashboard, reportes, lectura</li>
+            <li><code>vendedor / vendedor123</code> — registrar y anular compras</li>
+            <li><code>bodega / bodega123</code> — productos e inventario</li>
+            <li><code>auditor / auditor123</code> — solo lectura + auditoría</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
