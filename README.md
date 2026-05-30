@@ -94,6 +94,69 @@ docker exec -i gamestore_db psql -U proy3 -d gamestore < database/sql/04-views.s
 ./scripts/db-restore.sh database/backups/gamestore_YYYYMMDD_HHMMSS.dump
 ```
 
+## 🎯 Demo guiada (recorrido recomendado)
+
+Pensado para revisar todo el sistema en ~5 minutos. Usar los usuarios de prueba listados en [🔐 Autenticación](#-autenticación).
+
+1. **Entrar con `admin`.**
+2. **Dashboard:** métricas globales, ingresos del mes, alertas de inventario.
+3. **Productos:** filtros (búsqueda / franquicia / categoría / stock), crear o editar producto. El CRUD usa **Eloquent ORM**.
+4. **Compras:** filtros por búsqueda / local / fechas, export CSV, detalle de una compra.
+5. **Registrar compra:** carrito con varias líneas, validación frontend, ejecuta el stored procedure `sp_registrar_compra()` (función transaccional en PostgreSQL).
+6. **Anular compra:** confirma la acción, llama `sp_anular_compra()`, devuelve el inventario.
+7. **Reportes:** filtros por local y rango de fechas, export CSV, explican el uso de CTE y subqueries.
+8. **Auditoría de precios:** cambios registrados automáticamente por trigger, con filtros por producto y fechas.
+9. **Cerrar sesión y entrar con otro rol** para mostrar el RBAC en acción:
+   - `vendedor` → solo compras (sin dashboard ni productos)
+   - `bodega` → productos e inventario (sin compras)
+   - `auditor` → todo en solo lectura + página de auditoría
+
+## ✅ Checklist técnico de rúbrica
+
+| Punto | Estado |
+|---|---|
+| Arquitectura 3 capas: PostgreSQL + Laravel API + React | ✅ |
+| Docker Compose reproducible (`docker compose up`) | ✅ |
+| Variables de entorno en `.env` / `.env.example` (credenciales `proy3` / `secret`) | ✅ |
+| Autenticación con sesiones/cookies (Laravel Sanctum SPA) | ✅ |
+| 5 roles de aplicación con rutas protegidas en backend y frontend | ✅ |
+| 5 roles reales en PostgreSQL con `CREATE ROLE` + `GRANT/REVOKE` y `SET LOCAL ROLE` | ✅ |
+| ORM (Eloquent) para CRUD de Producto, categorías e inventario | ✅ |
+| 5 stored procedures invocados desde el backend | ✅ `sp_registrar_compra`, `sp_anular_compra`, `sp_actualizar_precio`, `sp_descontinuar_producto`, `sp_reabastecer_inventario` |
+| Stored procedure con parámetros IN/OUT y manejo de excepciones | ✅ `sp_actualizar_precio` |
+| Stored procedure con transacción explícita `ROLLBACK` interna | ✅ `sp_reabastecer_inventario` |
+| Transacciones explícitas con `BEGIN / COMMIT / ROLLBACK` | ✅ |
+| Función `registrar_compra()` y `anular_compra()` con `RAISE EXCEPTION` | ✅ |
+| Trigger de auditoría sobre cambios de precio | ✅ |
+| Vistas SQL para consultas agregadas | ✅ `vw_producto_stock`, `vw_compra_total` |
+| Reportes con CTE, subqueries anidadas y agregaciones | ✅ |
+| Export CSV (compras y reportes) | ✅ |
+| Backup / restore | ✅ scripts en `scripts/` |
+| Pruebas de frontend con Vitest | ✅ 18 pruebas |
+| README de instalación, API, demo y rúbrica | ✅ |
+
+## 🛠️ Comandos útiles durante la revisión
+
+```bash
+# Ver el estado de los servicios
+docker compose ps
+
+# Logs en tiempo real de la API Laravel
+docker compose logs -f api
+
+# Correr la suite de tests del frontend
+docker exec gamestore_web npm test
+
+# Linter del frontend
+docker exec gamestore_web npm run lint
+
+# Shell interactivo de PostgreSQL (como usuario proy3)
+docker exec -it gamestore_db psql -U proy3 -d gamestore
+
+# Crear un backup local de la BD
+./scripts/db-backup.sh
+```
+
 ## 🖥️ Frontend (React)
 
 La app de React vive en `web/` y consume la API vía un **proxy de Vite**: el navegador solo habla con `localhost:5173`, y Vite reenvía internamente las llamadas `/api/*` y `/sanctum/*` al servicio `api`. Eso elimina problemas de CORS y de cookies cross-port en desarrollo.
